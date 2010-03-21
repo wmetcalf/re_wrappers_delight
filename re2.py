@@ -1,4 +1,4 @@
-tible interface for the libre2 library
+#!/usr/bin/env python
 
 # Copyright (c) 2010, David Reiss and Facebook, Inc. All rights reserved.
 #
@@ -32,26 +32,32 @@ class error(Exception):
 
 import _re2
 
-__all__ = ["error", "compile", "match", "search"]
+__all__ = [
+    "error",
+    "compile",
+    "search",
+    "match",
+    "fullmatch",
+    ]
 
-# Module private compilation function, for future caching, other enhancements
+# Module-private compilation function, for future caching, other enhancements
 _compile = _re2._compile
 
 def compile(pattern):
-    """Return a compiled regular expression pattern.
-    """
+    "Compile a regular expression pattern, returning a pattern object."
     return _compile(pattern)
 
-def match(pattern, string):
-    """Apply pattern to start of string, return a match object, or None if 
-    nothing is found.
-    """
-    return _compile(pattern).match(string)
-
 def search(pattern, string):
-    """Scan through string with pattern, return a match object, or None if 
-    nothing is found.
-    """
+    """Scan through string looking for a match to the pattern, returning
+    a match object, or None if no match was found."""
     return _compile(pattern).search(string)
 
-eompile = _re2._compile
+def match(pattern, string):
+    """Try to apply the pattern at the start of the string, returning
+    a match object, or None if no match was found."""
+    return _compile(pattern).match(string)
+
+def fullmatch(pattern, string):
+    """Try to apply the pattern to the entire string, returning
+    a match object, or None if no match was found."""
+    return _compile(pattern).fullmatch(string)

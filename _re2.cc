@@ -39,14 +39,14 @@ using re2::RE2;
 using re2::StringPiece;
 
 
-typedef struct {
+typedef struct _RegexpObject2 {
   PyObject_HEAD
   // __dict__.  Simpler than implementing getattr and possibly faster.
   PyObject* attr_dict;
   RE2* re2_obj;
 } RegexpObject2;
 
-typedef struct {
+typedef struct _MatchObject2 {
   PyObject_HEAD
   // __dict__.  Simpler than implementing getattr and possibly faster.
   PyObject* attr_dict;
@@ -253,11 +253,15 @@ create_regexp(PyObject* pattern)
     return NULL;
   }
   regexp->re2_obj = NULL;
+  regexp->attr_dict = NULL;
 
   const char* raw_pattern = PyString_AS_STRING(pattern);
   Py_ssize_t len_pattern = PyString_GET_SIZE(pattern);
 
-  regexp->re2_obj = new(nothrow) RE2(StringPiece(raw_pattern, len_pattern));
+  RE2::Options options;
+  options.set_log_errors(false);
+
+  regexp->re2_obj = new(nothrow) RE2(StringPiece(raw_pattern, len_pattern), options);
 
   if (regexp->re2_obj == NULL) {
     PyErr_NoMemory();
@@ -437,6 +441,7 @@ create_match(PyObject* re, PyObject* string,
     delete[] groups;
     return NULL;
   }
+  match->attr_dict = NULL;
   match->groups = groups;
   match->re = re;
   match->string = string;
@@ -708,12 +713,10 @@ static PyMethodDef methods[] = {
 PyMODINIT_FUNC
 init_re2(void)
 {
-  Regexp_Type2.tp_new = PyType_GenericNew;
   if (PyType_Ready(&Regexp_Type2) < 0) {
     return;
   }
 
-  Match_Type2.tp_new = PyType_GenericNew;
   if (PyType_Ready(&Match_Type2) < 0) {
     return;
   }
