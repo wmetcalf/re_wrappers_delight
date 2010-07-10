@@ -1,0 +1,5 @@
+include LICENSE
+include *.cc
+include *.rst
+include *.py
+
