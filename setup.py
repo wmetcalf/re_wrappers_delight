@@ -17,6 +17,7 @@ setup(
     version="0.1.0",
     description="Python wrapper for Google's RE2",
     long_description=get_long_description(),
+    url="http://github.com/facebook/pyre2/",
     
     author="David Reiss",
     
