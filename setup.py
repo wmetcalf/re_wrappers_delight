@@ -3,10 +3,10 @@
 from distutils.core import setup, Extension
 import os
 
-SRC_DIR = os.path.join(BASE_DIR, PKG_BASE)
+BASE_DIR = os.path.dirname(__file__)
 
 def get_long_description():
-    readme_f = open(os.path.join(SRC_DIR, "README.rst"))
+    readme_f = open(os.path.join(BASE_DIR, "README.rst"))
     readme = readme_f.read()
     readme_f.close()
     
@@ -31,7 +31,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Text Processing",
         "Topic :: Text Processing :: General",
-        ]
+        ],
 
     py_modules = ["re2"],
     
