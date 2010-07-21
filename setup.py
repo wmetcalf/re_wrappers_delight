@@ -5,10 +5,10 @@ from Cython.Distutils import build_ext
 setup(
     name="re2",
     version="0.2.0",
-    description="Python wrapper for Google's RE2",
+    description="Python wrapper for Google's RE2 using Cython",
     author="Mike Axiak",
     ext_modules = [Extension("re2",
-                             ["re2.pyx"],
+                             ["src/re2.pyx"],
                              language="c++",
                              include_dirs=["/usr/include/re2"],
                              libraries=["re2"],
