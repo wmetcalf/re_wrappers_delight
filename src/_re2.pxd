@@ -2,19 +2,32 @@
 cdef extern from *:
     ctypedef char* const_char_ptr "const char*"
 
-cdef extern from "stdlib.h":
-    ctypedef unsigned long size_t
-    void *malloc(size_t size)
-    void free(void *ptr)
-
-cdef extern from "string" namespace "std":
+cdef extern from "<string>" namespace "std":
     cdef cppclass string:
         const_char_ptr c_str()
+        int length()
 
     ctypedef string cpp_string "std::string"
 
+
+cdef extern from "<map>" namespace "std":
+    cdef cppclass stringintmapiterator "std::map<std::string, int>::const_iterator":
+        cpp_string first
+        int second
+        stringintmapiterator operator++()
+        bint operator==(stringintmapiterator)
+        stringintmapiterator& operator*(stringintmapiterator)
+        bint operator!=(stringintmapiterator)
+
+    cdef cppclass const_stringintmap "const std::map<std::string, int>":
+        stringintmapiterator begin()
+        stringintmapiterator end()
+        int operator[](cpp_string)
+
+
 cdef extern from "Python.h":
     int PyObject_AsCharBuffer(object, const_char_ptr *, int *)
+    char * PyString_AS_STRING(object)
 
 cdef extern from "stringpiece.h" namespace "re2":
     cdef cppclass StringPiece:
@@ -30,6 +43,7 @@ cdef extern from "stringpiece.h" namespace "re2":
 
 cdef extern from "_re2macros.h":
     StringPiece * new_StringPiece_array(int)
+    const_stringintmap * addressof(const_stringintmap&)
 
 
 cdef extern from "re2.h" namespace "re2":
@@ -69,9 +83,16 @@ cdef extern from "re2.h" namespace "re2":
         int Match(const_StringPiece text, int startpos, Anchor anchor,
                    StringPiece * match, int nmatch) nogil
         int NumberOfCapturingGroups()
-        #const map<string, int>& NamedCapturingGroups() const;
-#bool Match(const StringPiece& text,
-#             int startpos,
-#             Anchor anchor,
-#             StringPiece *match,
-#             int nmatch) const;
+        int ok()
+        cpp_string error()
+        const_stringintmap& NamedCapturingGroups()
+        
+    #int Replace "RE2::Replace" (cpp_string *str,
+    #                            const_RE2 pattern,
+    #                            const_StringPiece rewrite)
+
+    #int GlobalReplace "RE2::GlobalReplace" (cpp_string *str,
+    #                                        const_RE2 pattern,
+    #                                        const_StringPiece rewrite)
+
+    ctypedef RE2 const_RE2 "const RE2"

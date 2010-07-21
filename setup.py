@@ -1,6 +1,19 @@
 #!/usr/bin/env python
-from distutils.core import setup, Extension
+from distutils.core import setup, Extension, Command
 from Cython.Distutils import build_ext
+
+class TestCommand(Command):
+    description = 'Run packaged tests'
+    user_options = []
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import tests.test as test
+        test.testall()
 
 setup(
     name="re2",
@@ -13,5 +26,6 @@ setup(
                              include_dirs=["/usr/include/re2"],
                              libraries=["re2"],
                              )],
-    cmdclass={'build_ext': build_ext},
+    cmdclass={'build_ext': build_ext,
+              'test': TestCommand},
     )

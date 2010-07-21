@@ -8,4 +8,6 @@ static inline re2::StringPiece * new_StringPiece_array(int n)
     return sp;
 }
 
+#define addressof(A) (&A)
+
 #endif
