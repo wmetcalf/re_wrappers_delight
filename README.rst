@@ -10,62 +10,48 @@ Summary
 pyre2 is a Python extension that wraps
 `Google's RE2 regular expression library
 <http://code.google.com/p/re2/>`_.
-It implements many of the features of Python's built-in
-``re`` module with compatible interfaces.
 
-
-New Features
-============
-
-* ``Regexp`` objects have a ``fullmatch`` method that works like ``match``,
-  but anchors the match at both the start and the end.
-* ``Regexp`` objects have
-  ``test_search``, ``test_match``, and ``test_fullmatch``
-  methods that work like ``search``, ``match``, and ``fullmatch``,
-  but only return ``True`` or ``False`` to indicate
-  whether the match was successful.
-  These methods should be faster than the full versions,
-  especially for patterns with capturing groups.
-
+This version of pyre2 is similar to the one you'd
+find at `facebook's github repository <http://github.com/facebook/pyre2/>`_
+except that the stated goal of this version is to be a *drop-in replacement* for
+the ``re`` module.
 
 Missing Features
 ================
 
+Currently the features missing are:
 * No substitution methods.
-* No flags.
 * No ``split``, ``findall``, or ``finditer``.
-* No top-level convenience functions like ``search`` and ``match``.
-  (Just use compile.)
 * No compile cache.
   (If you care enough about performance to use RE2,
   you probably care enough to cache your own patterns.)
-* No ``lastindex`` or ``lastgroup`` on ``Match`` objects.
 
 
 Current Status
 ==============
 
-pyre2 has only received basic testing,
-and I am by no means a Python extension expert,
-so it is quite possible that it contains bugs.
-I'd guess the most likely are reference leaks in error cases.
-
-RE2 doesn't build with fPIC, so I had to bulid it with
-
-::
-
-  make CFLAGS='-fPIC -c -Wall -Wno-sign-compare -O3 -g -I.'
-
-I also had to add it to my compiler search path when building the module
-with a command like
-
-::
-
-  env CPPFLAGS='-I/path/to/re2' LDFLAGS='-L/path/to/re2/obj' ./setup.py build
-
+pyre2 has only received basic testing. Please use it
+and let me know if you run into any issues!
 
 Contact
 =======
 
 You can file bug reports on GitHub, or email the author:
-David Reiss <dreiss@facebook.com>.
+Mike Axiak <mike@axiak.net>
+
+Tests
+=====
+
+If you would like to help, one thing that would be very useful
+is writing comprehensive tests for this. It's actually really easy:
+* Come up with regular expression problems using the regular python 're' module.
+* Write a session in python traceback format `Example <http://github.com/axiak/pyre2/blob/master/tests/search.txt>`_.
+* Replace your ``import re`` with ``import re2 as re``.
+* Save it as a .txt file in the tests directory. You can comment on it however you like and indent the code with 4 spaces.
+
+Contributions
+=============
+
+Though I ripped out the code, I'd like to thank David Reiss
+and Facebook for the initial inspiration. Plus, I got to
+gut this readme file!

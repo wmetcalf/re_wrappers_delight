@@ -1,4 +1,4 @@
-# cython: infer_types(True)
+# cython: infer_types(False)
 # Import re flags to be compatible.
 import re
 I = re.I
@@ -22,7 +22,7 @@ cdef int _I = I, _M = M, _S = S, _U = U, _X = X
 
 cimport _re2
 cimport python_unicode
-from cython.operator import preincrement as inc, dereference as deref
+from cython.operator cimport preincrement as inc, dereference as deref
 
 cdef inline object cpp_to_pystring(_re2.cpp_string input):
     return input.c_str()[:input.length()]
@@ -31,10 +31,16 @@ cdef class Match:
     cdef _re2.StringPiece * matches
     cdef _re2.const_stringintmap * named_groups
 
+    cdef object _lastgroup
+    cdef int _lastindex
     cdef int nmatches
     cdef object match_string
     cdef tuple _groups
     cdef dict _named_groups
+
+    def __init__(self):
+        self._lastgroup = -1
+        self._lastindex = -1
 
     cdef init_groups(self):
         cdef list groups = []
@@ -44,6 +50,7 @@ cdef class Match:
                 groups.append(None)
             else:
                 groups.append(self.matches[i].data()[:self.matches[i].length()])
+        self._lastindex = len(groups) - 1
         self._groups = tuple(groups)
 
     def groups(self):
@@ -82,9 +89,12 @@ cdef class Match:
 
         self._named_groups = result
         it = self.named_groups.begin()
+        self._lastgroup = None
         while it != self.named_groups.end():
             result[cpp_to_pystring(deref(it).first)] = self._groups[deref(it).second]
+            self._lastgroup = cpp_to_pystring(deref(it).first)
             inc(it)
+
         return result
 
     def end(self, int groupnum=0):
@@ -95,6 +105,19 @@ cdef class Match:
 
     def span(self, int groupnum=0):
         return self._makespan(groupnum)
+
+    property lastindex:
+        def __get__(self):
+            if self._lastindex < 1:
+                return None
+            else:
+                return self._lastindex
+
+    property lastgroup:
+        def __get__(self):
+            if self._lastgroup == -1:
+                self.groupdict()
+            return self._lastgroup
 
 
 cdef class Pattern:
