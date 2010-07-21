@@ -1,3 +1,5 @@
 /build
 /dist
-re2.html
+src/re2.html
+src/re2.so
+re2.so
