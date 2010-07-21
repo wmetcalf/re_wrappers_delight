@@ -20,6 +20,7 @@ Missing Features
 ================
 
 Currently the features missing are:
+
 * No substitution methods.
 * No ``split``, ``findall``, or ``finditer``.
 * No compile cache.
@@ -44,6 +45,7 @@ Tests
 
 If you would like to help, one thing that would be very useful
 is writing comprehensive tests for this. It's actually really easy:
+
 * Come up with regular expression problems using the regular python 're' module.
 * Write a session in python traceback format `Example <http://github.com/axiak/pyre2/blob/master/tests/search.txt>`_.
 * Replace your ``import re`` with ``import re2 as re``.
