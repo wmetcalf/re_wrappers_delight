@@ -37,8 +37,8 @@ and let me know if you run into any issues!
 Contact
 =======
 
-You can file bug reports on GitHub, or email the author:
-Mike Axiak <mike@axiak.net>
+You can file bug reports on GitHub, or contact the author:
+`Mike Axiak <http://mike.axiak.net/contact> contact page`_.
 
 Tests
 =====
