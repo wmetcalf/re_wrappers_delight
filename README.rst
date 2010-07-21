@@ -38,7 +38,7 @@ Contact
 =======
 
 You can file bug reports on GitHub, or contact the author:
-`Mike Axiak <http://mike.axiak.net/contact> contact page`_.
+`Mike Axiak  contact page <http://mike.axiak.net/contact>`_.
 
 Tests
 =====
