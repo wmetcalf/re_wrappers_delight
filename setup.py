@@ -1,15 +1,17 @@
 #!/usr/bin/env python
-
 from distutils.core import setup, Extension
+from Cython.Distutils import build_ext
 
 setup(
     name="re2",
-    version="0.1.0",
+    version="0.2.0",
     description="Python wrapper for Google's RE2",
-    author="David Reiss",
-    py_modules = ["re2"],
-    ext_modules = [Extension("_re2",
-      sources = ["_re2.cc"],
-      libraries = ["re2"],
-      )],
+    author="Mike Axiak",
+    ext_modules = [Extension("re2",
+                             ["re2.pyx"],
+                             language="c++",
+                             include_dirs=["/usr/include/re2"],
+                             libraries=["re2"],
+                             )],
+    cmdclass={'build_ext': build_ext},
     )
