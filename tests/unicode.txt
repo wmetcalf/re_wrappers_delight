@@ -1,0 +1,8 @@
+Here are some tests to make sure that utf-8 works
+=================================================
+
+    >>> import re2 as re
+    >>> a = u'\u6211\u5f88\u597d'
+    >>> c = re.compile(a[0])
+    >>> c.search(a).group()
+    u'\u6211'

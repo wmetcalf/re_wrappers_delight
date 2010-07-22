@@ -46,12 +46,45 @@ from cython.operator cimport preincrement as inc, dereference as deref
 import warnings
 
 cdef inline object cpp_to_pystring(_re2.cpp_string input):
+    # This function is a quick converter from a std::string object
+    # to a python string. By taking the slice we go to the right size,
+    # despite spurious or missing null characters.
     return input.c_str()[:input.length()]
+
+cdef inline object cpp_to_utf8(_re2.cpp_string input):
+    # This function converts a std::string object to a utf8 object.
+    return python_unicode.PyUnicode_DecodeUTF8(input.c_str(), input.length(), 'strict')
+
+cdef inline object char_to_utf8(_re2.const_char_ptr input, int length):
+    # This function converts a C string to a utf8 object.
+    return python_unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
+
+cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * length):
+    # This function will convert a pystring to a bytesstring, placing
+    # the char * in cstring, and the length in length.
+    # First it will try treating it as a str object, but failing that
+    # it will move to utf-8. If utf8 does not work, then it has to be
+    # a non-supported encoding.
+    if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) != -1:
+        # Success!
+        return 0
+    # Now we have a unicode object. Treat it as utf8.
+    try:
+        pystring = pystring.encode('utf8', 'strict')
+    except UnicodeEncodeError:
+        raise ValueError("Sorry, the re2 module does not support encodings other than utf8 or ascii.")
+        return -1
+    except:
+        return -1
+    if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) == -1:
+        return -1
+    return 1
 
 cdef class Match:
     cdef _re2.StringPiece * matches
     cdef _re2.const_stringintmap * named_groups
 
+    cdef bint encoded
     cdef object _lastgroup
     cdef int _lastindex
     cdef int nmatches
@@ -66,11 +99,16 @@ cdef class Match:
     cdef init_groups(self):
         cdef list groups = []
         cdef int i
+        cdef bint cur_encoded = self.encoded
+
         for i in range(self.nmatches):
             if self.matches[i].data() == NULL:
                 groups.append(None)
             else:
-                groups.append(self.matches[i].data()[:self.matches[i].length()])
+                if cur_encoded:
+                    groups.append(char_to_utf8(self.matches[i].data(), self.matches[i].length()))
+                else:
+                    groups.append(self.matches[i].data()[:self.matches[i].length()])
         self._lastindex = len(groups) - 1
         self._groups = tuple(groups)
 
@@ -144,6 +182,7 @@ cdef class Match:
 cdef class Pattern:
     cdef _re2.RE2 * pattern
     cdef int ngroups
+    cdef bint encoded
 
     cdef _search(self, string, int pos, int endpos, _re2.re2_Anchor anchoring):
         """
@@ -153,12 +192,15 @@ cdef class Pattern:
         cdef int size
         cdef int result
         cdef char * cstring
+        cdef int encoded
         cdef _re2.StringPiece * sp
         cdef _re2.StringPiece * matches = _re2.new_StringPiece_array(self.ngroups + 1)
         cdef Match m = Match()
 
-        if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
+        encoded = pystring_to_bytestring(string, &cstring, &size)
+        if encoded == -1:
             raise TypeError("expected string or buffer")
+
         if endpos != -1 and endpos < size:
             size = endpos
 
@@ -170,6 +212,7 @@ cdef class Pattern:
         if result == 0:
             return None
         m.matches = matches
+        m.encoded = <bint>(encoded) or self.encoded
         m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
         m.nmatches = self.ngroups + 1
         m.match_string = string
@@ -205,9 +248,13 @@ cdef class Pattern:
         cdef _re2.StringPiece * matches
         cdef Match m
         cdef list resultlist = []
+        cdef int encoded
 
-        if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
+        encoded = pystring_to_bytestring(string, &cstring, &size)
+        if encoded == -1:
             raise TypeError("expected string or buffer")
+        encoded = <bint>encoded or self.encoded
+
         if endpos != -1 and endpos < size:
             size = endpos
 
@@ -222,6 +269,7 @@ cdef class Pattern:
             # offset the pos to move to the next point
             pos = matches[0].data() - cstring + matches[0].length()
             m = Match()
+            m.encoded = encoded
             m.matches = matches
             m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
@@ -257,12 +305,16 @@ cdef class Pattern:
         cdef _re2.StringPiece * matches
         cdef Match m
         cdef list resultlist = []
+        cdef int encoded
 
         if maxsplit < 0:
             maxsplit = 0
 
-        if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
+        encoded = pystring_to_bytestring(string, &cstring, &size)
+        if encoded == -1:
             raise TypeError("expected string or buffer")
+
+        encoded = <bint>encoded or self.encoded
 
         if self.ngroups > 0:
             matches = _re2.new_StringPiece_array(2)
@@ -279,11 +331,17 @@ cdef class Pattern:
                 break
 
             endpos = matches[0].data() - cstring
-            resultlist.append(sp.data()[pos:endpos])
+            if encoded:
+                resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
+            else:
+                resultlist.append(sp.data()[pos:endpos])
             # offset the pos to move to the next point
             pos = endpos + matches[0].length()
             if num_groups == 2:
-                resultlist.append(matches[1].data()[:matches[1].length()])
+                if encoded:
+                    resultlist.append(char_to_utf8(matches[1].data(), matches[1].length()))
+                else:
+                    resultlist.append(matches[1].data()[:matches[1].length()])
 
             num_split += 1
             if maxsplit and num_split >= maxsplit:
@@ -314,13 +372,16 @@ cdef class Pattern:
         cdef _re2.StringPiece * sp
         cdef _re2.cpp_string * input_str
         cdef total_replacements = 0
+        cdef int encoded
 
         if callable(repl):
             # This is a callback, so let's use the custom function
             return self._subn_callback(repl, string, count)
 
-        if _re2.PyObject_AsCharBuffer(repl, <_re2.const_char_ptr*> &cstring, &size) == -1:
+        encoded = pystring_to_bytestring(string, &cstring, &size)
+        if encoded == -1:
             raise TypeError("expected string or buffer")
+        encoded = <bint>encoded or self.encoded
 
         sp = new _re2.StringPiece(cstring, size)
         input_str = new _re2.cpp_string(string)
@@ -334,7 +395,11 @@ cdef class Pattern:
                                                       sp[0])
         else:
             raise NotImplementedError("So far pyre2 does not support custom replacement counts")
-        return (cpp_to_pystring(input_str[0]), total_replacements)
+
+        if encoded:
+            return (cpp_to_utf8(input_str[0]), total_replacements)
+        else:
+            return (cpp_to_pystring(input_str[0]), total_replacements)
 
     def _subn_callback(self, callback, string, int count=0):
         """
@@ -345,6 +410,7 @@ cdef class Pattern:
         cdef int result
         cdef int endpos
         cdef int pos = 0
+        cdef int encoded
         cdef int num_repl = 0
         cdef char * cstring
         cdef _re2.StringPiece * sp
@@ -355,8 +421,10 @@ cdef class Pattern:
         if maxsplit < 0:
             maxsplit = 0
 
-        if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
+        encoded = pystring_to_bytestring(string, &cstring, &size)
+        if encoded == -1:
             raise TypeError("expected string or buffer")
+        encoded = <bint>encoded or self.encoded
 
         sp = new _re2.StringPiece(cstring, size)
 
@@ -368,10 +436,14 @@ cdef class Pattern:
                 break
 
             endpos = matches[0].data() - cstring
-            resultlist.append(sp.data()[pos:endpos])
+            if encoded:
+                resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
+            else:
+                resultlist.append(sp.data()[pos:endpos])
             pos = endpos + matches[0].length()
 
             m = Match()
+            m.encoded = encoded
             m.matches = matches
             m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
@@ -383,11 +455,16 @@ cdef class Pattern:
             if count and num_repl >= count:
                 break
 
-        resultlist.append(sp.data()[pos:])
+        if encoded:
+            resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
+        else:
+            resultlist.append(sp.data()[pos:])
         del matches
         del sp
-        return (''.join(resultlist), num_repl)
-
+        if encoded:
+            return (u''.join(resultlist), num_repl)
+        else:
+            return (''.join(resultlist), num_repl)
 
 
 def compile(pattern, int flags=0):
@@ -399,6 +476,7 @@ def compile(pattern, int flags=0):
     cdef _re2.StringPiece * s
     cdef _re2.Options opts
     cdef int error_code
+    cdef int encoded
 
     if isinstance(pattern, Pattern):
         return pattern
@@ -407,10 +485,11 @@ def compile(pattern, int flags=0):
     # Set the options given the flags above.
     if flags & _I:
         opts.set_case_sensitive(0);
-    if flags & _U:
-        opts.set_encoding(_re2.EncodingUTF8)
-    else:
-        opts.set_encoding(_re2.EncodingLatin1)
+
+    # The re.U flag is actually ignored since there
+    # are no unicode dependent character classes yet...
+    opts.set_encoding(_re2.EncodingUTF8)
+
     if not (flags & _X):
         opts.set_log_errors(0)
 
@@ -423,7 +502,8 @@ def compile(pattern, int flags=0):
         pattern = '(?' + strflags + ')' + pattern
 
     # We use this function to get the proper length of the string.
-    if _re2.PyObject_AsCharBuffer(pattern, <_re2.const_char_ptr*> &string, &length) == -1:
+    encoded = pystring_to_bytestring(pattern, &string, &length)
+    if encoded == -1:
         raise TypeError("first argument must be a string or compiled pattern")
 
     s = new _re2.StringPiece(string, length)
@@ -448,6 +528,7 @@ def compile(pattern, int flags=0):
     cdef Pattern pypattern = Pattern()
     pypattern.pattern = re_pattern
     pypattern.ngroups = re_pattern.NumberOfCapturingGroups()
+    pypattern.encoded = <bint>encoded
     del s
     return pypattern
 
