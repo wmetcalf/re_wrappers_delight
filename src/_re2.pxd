@@ -113,6 +113,7 @@ cdef extern from "_re2macros.h":
     # This fixes the bug Cython #548 whereby reference returns
     # cannot be addressed, due to it not being an l-value
     const_stringintmap * addressof(const_stringintmap&)
+    char * as_char(const_char_ptr)
 
     # This fixes the bug whereby namespaces are causing
     # cython to just break for Cpp arguments.

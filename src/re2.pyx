@@ -69,18 +69,24 @@ cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * l
     if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) != -1:
         # Success!
         return 0
+
+    if not isinstance(pystring, unicode):
+        return -1
+
     # Now we have a unicode object. Treat it as utf8.
-    try:
-        pystring = unicode.encode(pystring, 'utf8')
-    except UnicodeEncodeError, e:
-        sys.stderr.write("Sorry, the re2 module does not support encodings other than utf8 or ascii: %s\n" % e)
-        return -1
-    except Exception, e:
-        sys.stderr.write("Exception occured: %s\n" % e)
-        return -1
+    pystring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AsUnicode(pystring),
+                                                   len(pystring),#python_unicode.PyUnicode_GET_DATA_SIZE(pystring),
+                                                   "strict")
     if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) == -1:
         return -1
     return 1
+
+def stringtest(pystring):
+    cdef int length
+    cdef char * ptr
+    if pystring_to_bytestring(pystring, &ptr, &length) == -1:
+        raise ValueError("boo")
+    return ptr[:length]
 
 cdef class Match:
     cdef _re2.StringPiece * matches
