@@ -97,11 +97,15 @@ cdef class Match:
     def __init__(self):
         self._lastgroup = -1
         self._lastindex = -1
+        self._groups = None
 
     cdef init_groups(self):
         cdef list groups = []
         cdef int i
         cdef bint cur_encoded = self.encoded
+
+        if self._groups is not None:
+            return
 
         for i in range(self.nmatches):
             if self.matches[i].data() == NULL:
@@ -115,10 +119,14 @@ cdef class Match:
         self._groups = tuple(groups)
 
     def groups(self):
+        self.init_groups()
         return self._groups[1:]
 
     def group(self, groupnum=0):
         cdef int idx
+
+        self.init_groups()
+
         if isinstance(groupnum, basestring):
             return self.groupdict()[groupnum]
 
@@ -144,6 +152,8 @@ cdef class Match:
     def groupdict(self):
         cdef _re2.stringintmapiterator it
         cdef dict result = {}
+
+        self.init_groups()
 
         if self._named_groups:
             return self._named_groups
@@ -218,7 +228,6 @@ cdef class Pattern:
         m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
         m.nmatches = self.ngroups + 1
         m.match_string = string
-        m.init_groups()
         return m
 
 
