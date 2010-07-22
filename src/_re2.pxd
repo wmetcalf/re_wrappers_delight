@@ -9,6 +9,8 @@ cdef extern from "<string>" namespace "std":
         int length()
 
     ctypedef string cpp_string "std::string"
+    ctypedef string const_string "std::string"
+
 
 
 cdef extern from "<map>" namespace "std":
@@ -97,6 +99,7 @@ cdef extern from "re2.h" namespace "re2":
                    StringPiece * match, int nmatch) nogil
         int NumberOfCapturingGroups()
         int ok()
+        const_string pattern()
         cpp_string error()
         ErrorCode error_code()
         const_stringintmap& NamedCapturingGroups()
@@ -113,6 +116,7 @@ cdef extern from "_re2macros.h":
     # This fixes the bug Cython #548 whereby reference returns
     # cannot be addressed, due to it not being an l-value
     const_stringintmap * addressof(const_stringintmap&)
+    cpp_string * addressofs(cpp_string&)
     char * as_char(const_char_ptr)
 
     # This fixes the bug whereby namespaces are causing

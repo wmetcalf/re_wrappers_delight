@@ -242,6 +242,7 @@ cdef class Pattern:
         Scan through string looking for a match, and return a corresponding
         Match instance. Return None if no position in the string matches.
         """
+        self._print_pattern()
         return self._search(string, pos, endpos, _re2.UNANCHORED)
 
 
@@ -249,7 +250,14 @@ cdef class Pattern:
         """
         Matches zero or more characters at the beginning of the string.
         """
+        self._print_pattern()
         return self._search(string, pos, endpos, _re2.ANCHOR_START)
+
+    cdef _print_pattern(self):
+        cdef _re2.cpp_string * s
+        s = <_re2.cpp_string *>_re2.addressofs(self.pattern.pattern())
+        print cpp_to_pystring(s[0]) + "\n"
+        sys.stdout.flush()
 
 
     def findall(self, object string, int pos=0, int endpos=-1):
@@ -258,6 +266,7 @@ cdef class Pattern:
         RE pattern in string. For each match, the iterator returns a
         match object.
         """
+        self._print_pattern()
         cdef int size
         cdef int result
         cdef char * cstring
@@ -311,6 +320,7 @@ cdef class Pattern:
         split(string[, maxsplit = 0]) --> list
         Split a string by the occurances of the pattern.
         """
+        self._print_pattern()
         cdef int size
         cdef int num_groups = 1
         cdef int result
@@ -384,6 +394,7 @@ cdef class Pattern:
         the leftmost non-overlapping occurrences of pattern with the
         replacement repl.
         """
+        self._print_pattern()
         cdef int size
         cdef char * cstring
         cdef _re2.StringPiece * sp
