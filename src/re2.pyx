@@ -12,6 +12,26 @@ UNICODE = re.UNICODE
 X = re.X
 VERBOSE = re.VERBOSE
 
+FALLBACK_QUIETLY = 0
+FALLBACK_WARNING = 1
+FALLBACK_EXCEPTION = 2
+
+cdef int current_notification = FALLBACK_WARNING
+
+def set_fallback_notification(level):
+    """
+    Set the fallback notification to a level; one of:
+        FALLBACK_QUIETLY
+	FALLBACK_WARNING
+	FALLBACK_EXCEPTION
+    """
+    global current_notification
+    level = int(level)
+    if level < 0 or level > 2:
+        raise ValueError("This function expects a valid notification level.")
+    current_notification = level
+
+
 class RegexError(re.error):
     """
     Some error has occured in compilation of the regex.
@@ -23,6 +43,7 @@ cdef int _I = I, _M = M, _S = S, _U = U, _X = X
 cimport _re2
 cimport python_unicode
 from cython.operator cimport preincrement as inc, dereference as deref
+import warnings
 
 cdef inline object cpp_to_pystring(_re2.cpp_string input):
     return input.c_str()[:input.length()]
@@ -377,6 +398,7 @@ def compile(pattern, int flags=0):
     cdef int length
     cdef _re2.StringPiece * s
     cdef _re2.Options opts
+    cdef int error_code
 
     if isinstance(pattern, Pattern):
         return pattern
@@ -411,8 +433,17 @@ def compile(pattern, int flags=0):
         # Something went wrong with the compilation.
         del s
         error_msg = cpp_to_pystring(re_pattern.error())
+        error_code = re_pattern.error_code()
         del re_pattern
-        raise RegexError(error_msg)
+        if current_notification == <int>FALLBACK_EXCEPTION:
+            # Raise an exception regardless of the type of error.
+            raise RegexError(error_msg)
+        elif error_code != _re2.ErrorBadPerlOp and error_code != _re2.ErrorRepeatSize:
+            # Raise an error because these will not be fixed by using the ``re`` module.
+            raise RegexError(error_msg)
+        elif current_notification == <int>FALLBACK_WARNING:
+            warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
+        return re.compile(pattern, flags)
 
     cdef Pattern pypattern = Pattern()
     pypattern.pattern = re_pattern

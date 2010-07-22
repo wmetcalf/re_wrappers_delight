@@ -49,6 +49,24 @@ cdef extern from "re2.h" namespace "re2":
 
     ctypedef Anchor re2_Anchor "RE2::Anchor"
 
+    cdef enum ErrorCode:
+        NoError "RE2::NoError"
+        ErrorInternal "RE2::ErrorInternal"
+        # Parse errors
+        ErrorBadEscape "RE2::ErrorBadEscape"          # bad escape sequence
+        ErrorBadCharClass "RE2::ErrorBadCharClass"       # bad character class
+        ErrorBadCharRange "RE2::ErrorBadCharRange"       # bad character class range
+        ErrorMissingBracket "RE2::ErrorMissingBracket"     # missing closing ]
+        ErrorMissingParen   "RE2::ErrorMissingParen"       # missing closing )
+        ErrorTrailingBackslash "RE2::ErrorTrailingBackslash"  # trailing \ at end of regexp
+        ErrorRepeatArgument "RE2::ErrorRepeatArgument"     # repeat argument missing, e.g. "*"
+        ErrorRepeatSize "RE2::ErrorRepeatSize"         # bad repetition argument
+        ErrorRepeatOp "RE2::ErrorRepeatOp"           # bad repetition operator
+        ErrorBadPerlOp "RE2::ErrorBadPerlOp"          # bad perl operator
+        ErrorBadUTF8 "RE2::ErrorBadUTF8"            # invalid UTF-8 in regexp
+        ErrorBadNamedCapture "RE2::ErrorBadNamedCapture"    # bad named capture group
+        ErrorPatternTooLarge "RE2::ErrorPatternTooLarge"    # pattern too large (compile failed)
+
     cdef enum Encoding:
         EncodingUTF8 "RE2::Options::EncodingUTF8"
         EncodingLatin1 "RE2::Options::EncodingLatin1"
@@ -80,6 +98,7 @@ cdef extern from "re2.h" namespace "re2":
         int NumberOfCapturingGroups()
         int ok()
         cpp_string error()
+        ErrorCode error_code()
         const_stringintmap& NamedCapturingGroups()
 
     ctypedef RE2 const_RE2 "const RE2"
