@@ -58,6 +58,7 @@ setup(
                              include_dirs=[os.path.join(re2_prefix, "include", "re2")],
                              libraries=["re2"],
                              library_dirs=[os.path.join(re2_prefix, "lib")],
+                             runtime_library_dirs=[os.path.join(re2_prefix, "lib")],
                              )],
     cmdclass=cmdclass,
     classifiers = [
