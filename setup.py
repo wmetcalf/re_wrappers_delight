@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+import sys
 from distutils.core import setup, Extension, Command
-from Cython.Distutils import build_ext
 
 class TestCommand(Command):
     description = 'Run packaged tests'
@@ -15,17 +15,30 @@ class TestCommand(Command):
         import tests.test as test
         test.testall()
 
+cmdclass = {'test': TestCommand}
+
+ext_files = []
+if '--cython' in sys.argv[1:]:
+    # Using Cython
+    sys.argv.remove('--cython')
+    from Cython.Distutils import build_ext
+    cmdclass['build_ext'] = build_ext
+    ext_files.append("src/re2.pyx")
+else:
+    # Building from C
+    ext_files.append("src/re2.cpp")
+
+
 setup(
     name="re2",
     version="0.2.0",
     description="Python wrapper for Google's RE2 using Cython",
     author="Mike Axiak",
     ext_modules = [Extension("re2",
-                             ["src/re2.pyx"],
+                             ext_files,
                              language="c++",
                              include_dirs=["/usr/include/re2"],
                              libraries=["re2"],
                              )],
-    cmdclass={'build_ext': build_ext,
-              'test': TestCommand},
+    cmdclass=cmdclass,
     )
