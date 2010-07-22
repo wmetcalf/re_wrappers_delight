@@ -42,7 +42,7 @@ cdef extern from "stringpiece.h" namespace "re2":
  
 
 cdef extern from "_re2macros.h":
-    StringPiece * new_StringPiece_array(int)
+    StringPiece * new_StringPiece_array(int) nogil
     const_stringintmap * addressof(const_stringintmap&)
 
 

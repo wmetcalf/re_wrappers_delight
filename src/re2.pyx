@@ -133,7 +133,7 @@ cdef class Pattern:
         cdef int result
         cdef char * cstring
         cdef _re2.StringPiece * sp
-        cdef _re2.StringPiece * matches = _re2.new_StringPiece_array(self.ngroups + 2)
+        cdef _re2.StringPiece * matches = _re2.new_StringPiece_array(self.ngroups + 1)
         cdef Match m = Match()
 
         if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
@@ -155,12 +155,14 @@ cdef class Pattern:
         m.init_groups()
         return m
 
+
     def search(self, string, int pos=0, int endpos=-1):
         """
         Scan through string looking for a match, and return a corresponding
         Match instance. Return None if no position in the string matches.
         """
         return self._search(string, pos, endpos, _re2.UNANCHORED)
+
 
     def match(self, string, int pos=0, int endpos=-1):
         """
@@ -169,13 +171,44 @@ cdef class Pattern:
         return self._search(string, pos, endpos, _re2.ANCHOR_START)
 
 
-    def finditer(self, int pos=0, int endpos=-1):
+    def finditer(self, object string, int pos=0, int endpos=-1):
         """
         Return an iterator over all non-overlapping matches for the
         RE pattern in string. For each match, the iterator returns a
         match object.
         """
-        pass
+        cdef int size
+        cdef int result
+        cdef char * cstring
+        cdef _re2.StringPiece * sp
+        cdef _re2.StringPiece * matches
+        cdef Match m
+        cdef list resultlist = []
+
+        if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
+            raise TypeError("expected string or buffer")
+        if endpos != -1 and endpos < size:
+            size = endpos
+
+        sp = new _re2.StringPiece(cstring, size)
+
+        while True:
+            with nogil:
+                matches = _re2.new_StringPiece_array(self.ngroups + 1)
+                result = self.pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
+            if result == 0:
+                break
+            # offset the pos to move to the next point
+            pos = matches[0].data() - cstring + matches[0].length()
+            m = Match()
+            m.matches = matches
+            m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
+            m.nmatches = self.ngroups + 1
+            m.match_string = string
+            m.init_groups()
+            resultlist.append(m)
+        del sp
+        return resultlist
 
     def split(self, string, int maxsplit=0):
         """
@@ -210,7 +243,6 @@ def compile(pattern, int flags=0):
     cdef int length
     cdef _re2.StringPiece * s
     cdef _re2.Options opts
-    cdef _re2.cpp_string error_msg
 
     if isinstance(pattern, Pattern):
         return pattern
@@ -244,8 +276,9 @@ def compile(pattern, int flags=0):
     if not re_pattern.ok():
         # Something went wrong with the compilation.
         del s
-        error_msg = re_pattern.error()
-        raise RegexError(cpp_to_pystring(re_pattern.error()))
+        error_msg = cpp_to_pystring(re_pattern.error())
+        del re_pattern
+        raise RegexError(error_msg)
 
     cdef Pattern pypattern = Pattern()
     pypattern.pattern = re_pattern
@@ -266,3 +299,12 @@ def match(pattern, string, int flags=0):
     a match object, or None if no match was found.
     """
     return compile(pattern, flags).match(string)
+
+def finditer(pattern, string, int flags=0):
+    """
+    Return an iterator over all non-overlapping matches in the
+    string.  For each match, the iterator returns a match object.
+
+    Empty matches are included in the result.
+    """
+    return compile(pattern, flags).finditer(string)
