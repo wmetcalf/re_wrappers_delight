@@ -1,5 +1,6 @@
 # cython: infer_types(False)
 # Import re flags to be compatible.
+import sys
 import re
 I = re.I
 IGNORECASE = re.IGNORECASE
@@ -70,11 +71,12 @@ cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * l
         return 0
     # Now we have a unicode object. Treat it as utf8.
     try:
-        pystring = pystring.encode('utf8', 'strict')
-    except UnicodeEncodeError:
-        raise ValueError("Sorry, the re2 module does not support encodings other than utf8 or ascii.")
+        pystring = unicode.encode(pystring, 'utf8')
+    except UnicodeEncodeError, e:
+        sys.stderr.write("Sorry, the re2 module does not support encodings other than utf8 or ascii: %s\n" % e)
         return -1
-    except:
+    except Exception, e:
+        sys.stderr.write("Exception occured: %s\n" % e)
         return -1
     if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) == -1:
         return -1
