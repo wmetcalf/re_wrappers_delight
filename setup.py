@@ -52,7 +52,6 @@ setup(
     license="New BSD License",
     author_email = "mike@axiak.net",
     url = "http://github.com/axiak/pyre2/",
-    description = "In-place re-replacement python extension for re2",
     ext_modules = [Extension("re2",
                              ext_files,
                              language="c++",

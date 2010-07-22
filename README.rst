@@ -50,9 +50,13 @@ is writing comprehensive tests for this. It's actually really easy:
 * Replace your ``import re`` with ``import re2 as re``.
 * Save it as a .txt file in the tests directory. You can comment on it however you like and indent the code with 4 spaces.
 
-Contributions
-=============
+Credits
+=======
 
 Though I ripped out the code, I'd like to thank David Reiss
 and Facebook for the initial inspiration. Plus, I got to
 gut this readme file!
+
+Moreover, this library would of course not be possible if not for
+the immense work of the team at RE2 and the few people who work
+on Cython.
