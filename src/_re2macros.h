@@ -10,4 +10,7 @@ static inline re2::StringPiece * new_StringPiece_array(int n)
 
 #define addressof(A) (&A)
 
+#define pattern_Replace(A, B, C) re2::RE2::Replace((A), (B), (C))
+#define pattern_GlobalReplace(A, B, C) re2::RE2::GlobalReplace((A), (B), (C))
+
 #endif

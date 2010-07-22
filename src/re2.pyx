@@ -171,9 +171,9 @@ cdef class Pattern:
         return self._search(string, pos, endpos, _re2.ANCHOR_START)
 
 
-    def finditer(self, object string, int pos=0, int endpos=-1):
+    def findall(self, object string, int pos=0, int endpos=-1):
         """
-        Return an iterator over all non-overlapping matches for the
+        Return a list over all non-overlapping matches for the
         RE pattern in string. For each match, the iterator returns a
         match object.
         """
@@ -210,29 +210,163 @@ cdef class Pattern:
         del sp
         return resultlist
 
+    def finditer(self, object string, int pos=0, int endpos=-1):
+        """
+        Return a list over all non-overlapping matches for the
+        RE pattern in string. For each match, the iterator returns a
+        match object.
+        NOTE: In re2 THIS IS A SYNONYM FOR findall!
+        """
+        return self.findall(string, pos, endpos)
+
+
     def split(self, string, int maxsplit=0):
         """
         split(string[, maxsplit = 0]) --> list
         Split a string by the occurances of the pattern.
         """
-        pass
+        cdef int size
+        cdef int num_groups = 1
+        cdef int result
+        cdef int endpos
+        cdef int pos = 0
+        cdef int num_split = 0
+        cdef char * cstring
+        cdef _re2.StringPiece * sp
+        cdef _re2.StringPiece * matches
+        cdef Match m
+        cdef list resultlist = []
 
-    def sub(self, string, int count=0):
+        if maxsplit < 0:
+            maxsplit = 0
+
+        if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
+            raise TypeError("expected string or buffer")
+
+        if self.ngroups > 0:
+            matches = _re2.new_StringPiece_array(2)
+            num_groups = 2
+        else:
+            matches = _re2.new_StringPiece_array(1)
+
+        sp = new _re2.StringPiece(cstring, size)
+
+        while True:
+            with nogil:
+                result = self.pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, num_groups)
+            if result == 0:
+                break
+
+            endpos = matches[0].data() - cstring
+            resultlist.append(sp.data()[pos:endpos])
+            # offset the pos to move to the next point
+            pos = endpos + matches[0].length()
+            if num_groups == 2:
+                resultlist.append(matches[1].data()[:matches[1].length()])
+
+            num_split += 1
+            if maxsplit and num_split >= maxsplit:
+                break
+
+        resultlist.append(sp.data()[pos:])
+        del matches
+        del sp
+        return resultlist
+
+    def sub(self, repl, string, int count=0):
         """
         sub(repl, string[, count = 0]) --> newstring
         Return the string obtained by replacing the leftmost non-overlapping
         occurrences of pattern in string by the replacement repl.
         """
-        return self.subn(string, count)
+        return self.subn(repl, string, count)[0]
 
-    def subn(self, string, int count=0):
+    def subn(self, repl, string, int count=0):
         """
         subn(repl, string[, count = 0]) --> (newstring, number of subs)
         Return the tuple (new_string, number_of_subs_made) found by replacing
         the leftmost non-overlapping occurrences of pattern with the
         replacement repl.
         """
-        pass
+        cdef int size
+        cdef char * cstring
+        cdef _re2.StringPiece * sp
+        cdef _re2.cpp_string * input_str
+        cdef total_replacements = 0
+
+        if callable(repl):
+            # This is a callback, so let's use the custom function
+            return self._subn_callback(repl, string, count)
+
+        if _re2.PyObject_AsCharBuffer(repl, <_re2.const_char_ptr*> &cstring, &size) == -1:
+            raise TypeError("expected string or buffer")
+
+        sp = new _re2.StringPiece(cstring, size)
+        input_str = new _re2.cpp_string(string)
+        if not count:
+            total_replacements = _re2.pattern_GlobalReplace(input_str,
+                                                            self.pattern[0],
+                                                            sp[0])
+        elif count == 1:
+            total_replacements = _re2.pattern_Replace(input_str,
+                                                      self.pattern[0],
+                                                      sp[0])
+        else:
+            raise NotImplementedError("So far pyre2 does not support custom replacement counts")
+        return (cpp_to_pystring(input_str[0]), total_replacements)
+
+    def _subn_callback(self, callback, string, int count=0):
+        """
+        This function is probably the hardest to implement correctly.
+        This is my first attempt, but if anybody has a better solution, please help out.
+        """
+        cdef int size
+        cdef int result
+        cdef int endpos
+        cdef int pos = 0
+        cdef int num_repl = 0
+        cdef char * cstring
+        cdef _re2.StringPiece * sp
+        cdef _re2.StringPiece * matches
+        cdef Match m
+        cdef list resultlist = []
+
+        if maxsplit < 0:
+            maxsplit = 0
+
+        if _re2.PyObject_AsCharBuffer(string, <_re2.const_char_ptr*> &cstring, &size) == -1:
+            raise TypeError("expected string or buffer")
+
+        sp = new _re2.StringPiece(cstring, size)
+
+        while True:
+            with nogil:
+                matches = _re2.new_StringPiece_array(self.ngroups + 1)
+                result = self.pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
+            if result == 0:
+                break
+
+            endpos = matches[0].data() - cstring
+            resultlist.append(sp.data()[pos:endpos])
+            pos = endpos + matches[0].length()
+
+            m = Match()
+            m.matches = matches
+            m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
+            m.nmatches = self.ngroups + 1
+            m.match_string = string
+            m.init_groups()
+            resultlist.append(callback(m) or '')
+
+            num_repl += 1
+            if count and num_repl >= count:
+                break
+
+        resultlist.append(sp.data()[pos:])
+        del matches
+        del sp
+        return (''.join(resultlist), num_repl)
+
 
 
 def compile(pattern, int flags=0):
@@ -302,9 +436,49 @@ def match(pattern, string, int flags=0):
 
 def finditer(pattern, string, int flags=0):
     """
-    Return an iterator over all non-overlapping matches in the
+    Return an list of all non-overlapping matches in the
     string.  For each match, the iterator returns a match object.
 
     Empty matches are included in the result.
     """
     return compile(pattern, flags).finditer(string)
+
+def findall(pattern, string, int flags=0):
+    """
+    Return an list of all non-overlapping matches in the
+    string.  For each match, the iterator returns a match object.
+
+    Empty matches are included in the result.
+    """
+    return compile(pattern, flags).findall(string)
+
+def split(pattern, string, int maxsplit=0):
+    """
+    Split the source string by the occurrences of the pattern,
+    returning a list containing the resulting substrings.
+    """
+    return compile(pattern).split(string, maxsplit)
+
+def sub(pattern, string, int count=0):
+    """
+    Return the string obtained by replacing the leftmost
+    non-overlapping occurrences of the pattern in string by the
+    replacement repl.  repl can be either a string or a callable;
+    if a string, backslash escapes in it are processed.  If it is
+    a callable, it's passed the match object and must return
+    a replacement string to be used.
+    """
+    return compile(pattern).sub(string, count)
+
+def subn(pattern, string, int count=0):
+    """
+    Return a 2-tuple containing (new_string, number).
+    new_string is the string obtained by replacing the leftmost
+    non-overlapping occurrences of the pattern in the source
+    string by the replacement repl.  number is the number of
+    substitutions that were made. repl can be either a string or a
+    callable; if a string, backslash escapes in it are processed.
+    If it is a callable, it's passed the match object and must
+    return a replacement string to be used.
+    """
+    return compile(pattern).subn(string, count)

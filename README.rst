@@ -21,8 +21,7 @@ Missing Features
 
 Currently the features missing are:
 
-* No substitution methods.
-* No ``split``, ``findall``, or ``finditer``.
+* If you use substitution methods without a callback, a non 0/1 maxsplit argument is not supported.
 * No compile cache.
   (If you care enough about performance to use RE2,
   you probably care enough to cache your own patterns.)

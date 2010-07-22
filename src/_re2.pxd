@@ -4,6 +4,7 @@ cdef extern from *:
 
 cdef extern from "<string>" namespace "std":
     cdef cppclass string:
+        string(char *)
         const_char_ptr c_str()
         int length()
 
@@ -40,12 +41,6 @@ cdef extern from "stringpiece.h" namespace "re2":
 
     ctypedef StringPiece const_StringPiece "const StringPiece"
  
-
-cdef extern from "_re2macros.h":
-    StringPiece * new_StringPiece_array(int) nogil
-    const_stringintmap * addressof(const_stringintmap&)
-
-
 cdef extern from "re2.h" namespace "re2":
     cdef enum Anchor:
         UNANCHORED "RE2::UNANCHORED"
@@ -86,13 +81,25 @@ cdef extern from "re2.h" namespace "re2":
         int ok()
         cpp_string error()
         const_stringintmap& NamedCapturingGroups()
-        
-    #int Replace "RE2::Replace" (cpp_string *str,
-    #                            const_RE2 pattern,
-    #                            const_StringPiece rewrite)
-
-    #int GlobalReplace "RE2::GlobalReplace" (cpp_string *str,
-    #                                        const_RE2 pattern,
-    #                                        const_StringPiece rewrite)
 
     ctypedef RE2 const_RE2 "const RE2"
+
+
+# This header is used for ways to hack^Wbypass the cython
+# issues.
+cdef extern from "_re2macros.h":
+
+    StringPiece * new_StringPiece_array(int) nogil
+
+    # This fixes the bug Cython #548 whereby reference returns
+    # cannot be addressed, due to it not being an l-value
+    const_stringintmap * addressof(const_stringintmap&)
+
+    # This fixes the bug whereby namespaces are causing
+    # cython to just break for Cpp arguments.
+    int pattern_Replace(cpp_string *str,
+                        const_RE2 pattern,
+                        const_StringPiece rewrite)
+    int pattern_GlobalReplace(cpp_string *str,
+                              const_RE2 pattern,
+                              const_StringPiece rewrite)
