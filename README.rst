@@ -47,6 +47,27 @@ And in the above example, ``set_fallback_notification`` can handle 3 values:
 ``re.FALLBACK_QUIETLY`` (default), ``re.FALLBACK_WARNING`` (raises a warning), and
 ``re.FALLBACK_EXCEPTION`` (which raises an exception).
 
+Installation
+============
+
+To install, you must first install the prerequisites:
+
+* The `re2 library from Google <http://code.google.com/p/re2/>`_
+* The Python development headers (e.g. *sudo apt-get install python-dev*)
+* A build environment with ``g++`` (e.g. *sudo apt-get install build-essential*)
+
+After the prerequisites are installed, you can try installing using ``easy_install``::
+    $ sudo easy_install re2
+
+if you have setuptools installed (or use ``pip``).
+
+If you don't want to use ``setuptools``, you can alternatively download the tarball from `pypi <http://pypi.python.org/pypi/re2/>`_.
+
+Alternative to those, you can clone this repository and try installing it from there. To this, run::
+
+    $ git clone git://github.com/axiak/pyre2.git
+    $ cd pyre2.git
+    $ sudo python setup.py install
 
 Performance
 ===========
