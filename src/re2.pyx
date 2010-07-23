@@ -253,12 +253,12 @@ cdef class Pattern:
         sys.stdout.flush()
 
 
-    def findall(self, object string, int pos=0, int endpos=-1):
+    def finditer(self, object string, int pos=0, int endpos=-1):
         """
-        Return a list over all non-overlapping matches for the
-        RE pattern in string. For each match, the iterator returns a
-        match object.
+        Return all non-overlapping matches of pattern in string as a list
+        of match objects.
         """
+        # FIXME should return an iterator according to spec
         cdef int size
         cdef int result
         cdef char * cstring
@@ -297,14 +297,17 @@ cdef class Pattern:
         del sp
         return resultlist
 
-    def finditer(self, object string, int pos=0, int endpos=-1):
+    def findall(self, object string, int pos=0, int endpos=-1):
         """
-        Return a list over all non-overlapping matches for the
-        RE pattern in string. For each match, the iterator returns a
-        match object.
-        NOTE: In re2 THIS IS A SYNONYM FOR findall!
+        Return all non-overlapping matches of pattern in string as a list
+        of strings.
         """
-        return self.findall(string, pos, endpos)
+        def chooser(Match match):
+            if match.nmatches > 1:
+                return match.groups()
+            else:
+                return match.group(0)
+        return map(chooser, self.finditer(string, pos, endpos))
 
 
     def split(self, string, int maxsplit=0):
