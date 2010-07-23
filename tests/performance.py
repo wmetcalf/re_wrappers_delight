@@ -80,7 +80,7 @@ def benchmarks_to_ReST(benchmarks):
     def print_divider(symbol='-'):
         print '+' + '+'.join(symbol*col_size for col_size in col_sizes) + '+'
     def print_row(row):
-        print '|' + '|'.join(item.ljust(col_sizes[i]) for i, item in enumerate(row))
+        print '|' + '|'.join(item.ljust(col_sizes[i]) for i, item in enumerate(row)) + '|'
 
     print_divider()
     print_row(table[0])

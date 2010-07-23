@@ -95,13 +95,13 @@ XML file. I'm running them multiple times, being careful to use the ``timeit`` m
 To see more details, please see the `performance script <http://github.com/axiak/pyre2/tree/master/tests/performance.py>`_.
 
 +-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
-|Test             |Description                                                                |# total runs|``re`` time(s)|``re2`` time(s)|% total time
+|Test             |Description                                                                |# total runs|``re`` time(s)|``re2`` time(s)|% total time|
 +=================+===========================================================================+============+==============+===============+============+
-|Findall URI|Email|Find list of '([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)'|2           |21.672        |0.318          |1.47%       
+|Findall URI|Email|Find list of '([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)'|2           |21.672        |0.318          |1.47%       |
 +-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
-|Replace WikiLinks|This test replaces links of the form [[Obama|Barack_Obama]] to Obama.      |100         |17.271        |3.399          |19.68%      
+|Replace WikiLinks|This test replaces links of the form [[Obama|Barack_Obama]] to Obama.      |100         |17.271        |3.399          |19.68%      |
 +-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
-|Remove WikiLinks |This test splits the data by the <page> tag.                               |100         |15.820        |1.479          |9.35%       
+|Remove WikiLinks |This test splits the data by the <page> tag.                               |100         |15.820        |1.479          |9.35%       |
 +-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
 
 Feel free to add more speed tests to the bottom of the script and send a pull request my way!
