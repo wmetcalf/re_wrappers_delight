@@ -60,32 +60,25 @@ cdef inline object char_to_utf8(_re2.const_char_ptr input, int length):
     # This function converts a C string to a utf8 object.
     return python_unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
 
+cdef unicode_to_bytestring(object pystring, int * encoded):
+    # This function will convert a utf8 string to a bytestring object.
+    if python_unicode.PyUnicode_Check(pystring):
+        pystring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AS_UNICODE(pystring),
+                                                       python_unicode.PyUnicode_GET_SIZE(pystring),
+                                                       "strict")
+        encoded[0] = 1
+    else:
+        encoded[0] = 0
+    return pystring
+
 cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * length):
     # This function will convert a pystring to a bytesstring, placing
     # the char * in cstring, and the length in length.
     # First it will try treating it as a str object, but failing that
     # it will move to utf-8. If utf8 does not work, then it has to be
     # a non-supported encoding.
-    cstring[0] == NULL
+    return _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length)
 
-    if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) != -1:
-        # Success!
-        return 0
-
-    if not isinstance(pystring, unicode):
-        return -1
-
-    # Now we have a unicode object. Treat it as utf8.
-    newstring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AsUnicode(pystring),
-                                                   python_unicode.PyUnicode_GET_SIZE(pystring),
-                                                   "strict")
-
-    if _re2.PyObject_AsCharBuffer(newstring, <_re2.const_char_ptr*> cstring, length) == -1:
-        return -1
-
-    if cstring[0] == NULL:
-        return -1
-    return 1
 
 cdef class Match:
     cdef _re2.StringPiece * matches
@@ -209,13 +202,13 @@ cdef class Pattern:
         cdef int size
         cdef int result
         cdef char * cstring
-        cdef int encoded
+        cdef int encoded = 0
         cdef _re2.StringPiece * sp
         cdef _re2.StringPiece * matches = _re2.new_StringPiece_array(self.ngroups + 1)
         cdef Match m = Match()
 
-        encoded = pystring_to_bytestring(string, &cstring, &size)
-        if encoded == -1:
+        string = unicode_to_bytestring(string, &encoded)
+        if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
 
         if endpos != -1 and endpos < size:
@@ -270,10 +263,10 @@ cdef class Pattern:
         cdef _re2.StringPiece * matches
         cdef Match m
         cdef list resultlist = []
-        cdef int encoded
+        cdef int encoded = 0
 
-        encoded = pystring_to_bytestring(string, &cstring, &size)
-        if encoded == -1:
+        string = unicode_to_bytestring(string, &encoded)
+        if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
         encoded = <bint>encoded or self.encoded
 
@@ -327,13 +320,13 @@ cdef class Pattern:
         cdef _re2.StringPiece * matches
         cdef Match m
         cdef list resultlist = []
-        cdef int encoded
+        cdef int encoded = 0
 
         if maxsplit < 0:
             maxsplit = 0
 
-        encoded = pystring_to_bytestring(string, &cstring, &size)
-        if encoded == -1:
+        string = unicode_to_bytestring(string, &encoded)
+        if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
 
         encoded = <bint>encoded or self.encoded
@@ -394,14 +387,14 @@ cdef class Pattern:
         cdef _re2.StringPiece * sp
         cdef _re2.cpp_string * input_str
         cdef total_replacements = 0
-        cdef int encoded
+        cdef int encoded = 0
 
         if callable(repl):
             # This is a callback, so let's use the custom function
             return self._subn_callback(repl, string, count)
 
-        encoded = pystring_to_bytestring(string, &cstring, &size)
-        if encoded == -1:
+        string = unicode_to_bytestring(string, &encoded)
+        if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
         encoded = <bint>encoded or self.encoded
 
@@ -432,7 +425,7 @@ cdef class Pattern:
         cdef int result
         cdef int endpos
         cdef int pos = 0
-        cdef int encoded
+        cdef int encoded = 0
         cdef int num_repl = 0
         cdef char * cstring
         cdef _re2.StringPiece * sp
@@ -443,8 +436,8 @@ cdef class Pattern:
         if maxsplit < 0:
             maxsplit = 0
 
-        encoded = pystring_to_bytestring(string, &cstring, &size)
-        if encoded == -1:
+        string = unicode_to_bytestring(string, &encoded)
+        if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
         encoded = <bint>encoded or self.encoded
 
@@ -498,7 +491,7 @@ def compile(pattern, int flags=0):
     cdef _re2.StringPiece * s
     cdef _re2.Options opts
     cdef int error_code
-    cdef int encoded
+    cdef int encoded = 0
 
     if isinstance(pattern, Pattern):
         return pattern
@@ -524,8 +517,9 @@ def compile(pattern, int flags=0):
         pattern = '(?' + strflags + ')' + pattern
 
     # We use this function to get the proper length of the string.
-    encoded = pystring_to_bytestring(pattern, &string, &length)
-    if encoded == -1:
+
+    pattern = unicode_to_bytestring(pattern, &encoded)
+    if pystring_to_bytestring(pattern, &string, &length) == -1:
         raise TypeError("first argument must be a string or compiled pattern")
 
     s = new _re2.StringPiece(string, length)
