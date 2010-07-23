@@ -17,8 +17,8 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
-VERSION = (0, 2, 4)
-VERSION_HEX = 0x000204
+VERSION = (0, 2, 6)
+VERSION_HEX = 0x000206
 
 cdef int current_notification = FALLBACK_WARNING
 
@@ -49,7 +49,7 @@ cimport python_unicode
 from cython.operator cimport preincrement as inc, dereference as deref
 import warnings
 
-cdef inline object cpp_to_pystring(_re2.cpp_string input):
+cdef object cpp_to_pystring(_re2.cpp_string input):
     # This function is a quick converter from a std::string object
     # to a python string. By taking the slice we go to the right size,
     # despite spurious or missing null characters.
@@ -63,7 +63,7 @@ cdef inline object char_to_utf8(_re2.const_char_ptr input, int length):
     # This function converts a C string to a utf8 object.
     return python_unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
 
-cdef unicode_to_bytestring(object pystring, int * encoded):
+cdef inline object unicode_to_bytestring(object pystring, int * encoded):
     # This function will convert a utf8 string to a bytestring object.
     if python_unicode.PyUnicode_Check(pystring):
         pystring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AS_UNICODE(pystring),
@@ -400,7 +400,8 @@ cdef class Pattern:
             return self._subn_callback(repl, string, count)
 
         string = unicode_to_bytestring(string, &encoded)
-        if pystring_to_bytestring(string, &cstring, &size) == -1:
+        repl = unicode_to_bytestring(repl, &encoded)
+        if pystring_to_bytestring(repl, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
         encoded = <bint>encoded or self.encoded
 
@@ -593,7 +594,7 @@ def split(pattern, string, int maxsplit=0):
     """
     return compile(pattern).split(string, maxsplit)
 
-def sub(pattern, string, int count=0):
+def sub(pattern, repl, string, int count=0):
     """
     Return the string obtained by replacing the leftmost
     non-overlapping occurrences of the pattern in string by the
@@ -602,9 +603,9 @@ def sub(pattern, string, int count=0):
     a callable, it's passed the match object and must return
     a replacement string to be used.
     """
-    return compile(pattern).sub(string, count)
+    return compile(pattern).sub(repl, string, count)
 
-def subn(pattern, string, int count=0):
+def subn(pattern, repl, string, int count=0):
     """
     Return a 2-tuple containing (new_string, number).
     new_string is the string obtained by replacing the leftmost
@@ -615,4 +616,4 @@ def subn(pattern, string, int count=0):
     If it is a callable, it's passed the match object and must
     return a replacement string to be used.
     """
-    return compile(pattern).subn(string, count)
+    return compile(pattern).subn(repl, string, count)
