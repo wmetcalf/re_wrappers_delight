@@ -17,6 +17,9 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
+VERSION = (0, 2, 4)
+VERSION_HEX = 0x000204
+
 cdef int current_notification = FALLBACK_WARNING
 
 def set_fallback_notification(level):
