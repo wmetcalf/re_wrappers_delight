@@ -56,7 +56,8 @@ To install, you must first install the prerequisites:
 * The Python development headers (e.g. *sudo apt-get install python-dev*)
 * A build environment with ``g++`` (e.g. *sudo apt-get install build-essential*)
 
-After the prerequisites are installed, you can try installing using ``easy_install``:
+After the prerequisites are installed, you can try installing using ``easy_install``::
+
     $ sudo easy_install re2
 
 if you have setuptools installed (or use ``pip``).
@@ -86,21 +87,22 @@ Performance is of course the point of this module, so it better perform well.
 Regular expressions vary widely in complexity, and the salient feature of ``RE2`` is
 that it behaves well asymptotically. This being said, for very simple substitutions,
 I've found that occasionally python's regular ``re`` module is actually slightly faster.
-However, when the module get's slow, this is much better.
+However, when the ``re`` module gets slow, it gets *really* slow, while this module
+buzzes along.
 
 In the below example, I'm running the data against 8MB of text from the collosal Wikipedia
 XML file. I'm running them multiple times, being careful to use the ``timeit`` module.
 To see more details, please see the `performance script <http://github.com/axiak/pyre2/tree/master/tests/performance.py>`_.
 
-+-----------------+---------------------------------------------------------------------------+--------------+---------------+------------+
-|Test             |Description                                                                |``re`` time(s)|``re2`` time(s)|% total time|
-+=================+===========================================================================+==============+===============+============+
-|Findall URI|Email|Find list of '([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)'|20.336        |0.388          |1.91%       |
-+-----------------+---------------------------------------------------------------------------+--------------+---------------+------------+
-|Replace WikiLinks|This test replaces links of the form [[Obama|Barack_Obama]] to Obama.      |16.461        |2.797          |16.99%      |
-+-----------------+---------------------------------------------------------------------------+--------------+---------------+------------+
-|Remove WikiLinks |This test splits the data by the <page> tag.                               |16.202        |1.560          |9.63%       |
-+-----------------+---------------------------------------------------------------------------+--------------+---------------+------------+
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
+|Test             |Description                                                                |# total runs|``re`` time(s)|``re2`` time(s)|% total time
++=================+===========================================================================+============+==============+===============+============+
+|Findall URI|Email|Find list of '([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)'|2           |21.672        |0.318          |1.47%       
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
+|Replace WikiLinks|This test replaces links of the form [[Obama|Barack_Obama]] to Obama.      |100         |17.271        |3.399          |19.68%      
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
+|Remove WikiLinks |This test splits the data by the <page> tag.                               |100         |15.820        |1.479          |9.35%       
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+------------+
 
 Feel free to add more speed tests to the bottom of the script and send a pull request my way!
 

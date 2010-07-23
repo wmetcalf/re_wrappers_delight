@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+"""
+This module runs the performance tests to compare the ``re`` module with the
+``re2`` module. You can just run it from the command line, assuming you have re2
+installed, and it will output a table in ReST format comparing everything.
+
+To add a test, you can add a function to the bottom of this page that uses the
+@register_test() decorator. Alternatively, you can create a module that uses it and
+import it.
+"""
 from timeit import Timer
 import simplejson
 
@@ -22,6 +31,8 @@ test = tests[%r]
 current_re = [None]
 
 
+
+
 def main():
     benchmarks = {}
     # Run all of the performance comparisons.
@@ -40,7 +51,8 @@ def main():
                       setup_code % testname)
             benchmarks[testname][module.__name__] = (t.timeit(method.num_runs),
                                                      method.__doc__.strip(),
-                                                     method.pattern)
+                                                     method.pattern,
+                                                     method.num_runs)
 
         if results[0] != results[1]:
             raise ValueError("re2 output is not the same as re output: %s" % testname)
@@ -52,13 +64,13 @@ def benchmarks_to_ReST(benchmarks):
     """
     Convert dictionary to a nice table for ReST.
     """
-    headers = ('Test', 'Description', '``re`` time(s)', '``re2`` time(s)', '% total time')
+    headers = ('Test', 'Description', '# total runs', '``re`` time(s)', '``re2`` time(s)', '% total time')
     table = [headers]
     f = lambda x: "%0.3f" % x
     p = lambda x: "%0.2f%%" % (x * 100)
 
     for test, data in benchmarks.items():
-        row = [test, data["re"][1], f(data["re"][0]), f(data["re2"][0])]
+        row = [test, data["re"][1], str(data["re"][3]), f(data["re"][0]), f(data["re2"][0])]
         row.append(p(data["re2"][0] / data["re"][0]))
         table.append(row)
     col_sizes = [0] * len(table[0])
@@ -81,15 +93,12 @@ def benchmarks_to_ReST(benchmarks):
 
 
 
-#
+###############################################
 # Tests for performance
 ###############################################
 
 
-
-
-
-# Convenient decorator for registering.
+# Convenient decorator for registering a new test.
 def register_test(name, pattern, num_runs = 100, **data):
     def decorator(method):
         tests[name] = method
@@ -100,13 +109,17 @@ def register_test(name, pattern, num_runs = 100, **data):
         return method
     return decorator
 
-_wikidata = None
 
+# This is the only function to get data right now,
+# but I could imagine other functions as well.
+_wikidata = None
 def getwikidata():
     global _wikidata
     if _wikidata is None:
         _wikidata = gzip.open('wikipages.xml.gz').read()
     return _wikidata
+
+
 
 @register_test("Findall URI|Email",
                r'([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)',
@@ -119,6 +132,7 @@ def findall_uriemail(pattern, data):
     return len(pattern.findall(data))
 
 
+
 @register_test("Replace WikiLinks",
                r'(\[\[(^\|)+.*?\]\])',
                data=getwikidata())
@@ -127,6 +141,7 @@ def replace_wikilinks(pattern, data):
     This test replaces links of the form [[Obama|Barack_Obama]] to Obama.
     """
     return len(pattern.sub(r'\1', data))
+
 
 
 @register_test("Remove WikiLinks",
@@ -138,6 +153,8 @@ def remove_wikilinks(pattern, data):
     """
     return len(pattern.sub(r'', data))
 
+
+
 @register_test("Remove WikiLinks",
                r'(<page[^>]*>)',
                data=getwikidata())
@@ -146,6 +163,9 @@ def split_pages(pattern, data):
     This test splits the data by the <page> tag.
     """
     return len(pattern.split(data))
+
+
+
 
 
 if __name__ == '__main__':
