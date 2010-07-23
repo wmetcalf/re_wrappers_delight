@@ -10,62 +10,116 @@ Summary
 pyre2 is a Python extension that wraps
 `Google's RE2 regular expression library
 <http://code.google.com/p/re2/>`_.
-It implements many of the features of Python's built-in
-``re`` module with compatible interfaces.
 
+This version of pyre2 is similar to the one you'd
+find at `facebook's github repository <http://github.com/facebook/pyre2/>`_
+except that the stated goal of this version is to be a *drop-in replacement* for
+the ``re`` module.
 
-New Features
+Backwards Compatibility
+=======================
+
+The stated goal of this module is to be a drop-in replacement for ``re``. 
+My hope is that some will be able to go to the top of their module and put::
+
+    try:
+        import re2 as re
+    except ImportError:
+        import re
+
+That being said, there are features of the ``re`` module that this module may
+never have. For example, ``RE2`` does not handle lookahead assertions (``(?=...)``).
+For this reason, the module will automatically fall back to the original ``re`` module
+if there is a regex that it cannot handle.
+
+However, there are times when you may want to be notified of a failover. For this reason,
+I'm adding the single function ``set_fallback_notification`` to the module.
+Thus, you can write::
+
+    try:
+        import re2 as re
+    except ImportError:
+        import re
+    else:
+	re.set_fallback_notification(re.FALLBACK_WARNING)
+
+And in the above example, ``set_fallback_notification`` can handle 3 values:
+``re.FALLBACK_QUIETLY`` (default), ``re.FALLBACK_WARNING`` (raises a warning), and
+``re.FALLBACK_EXCEPTION`` (which raises an exception).
+
+Installation
 ============
 
-* ``Regexp`` objects have a ``fullmatch`` method that works like ``match``,
-  but anchors the match at both the start and the end.
-* ``Regexp`` objects have
-  ``test_search``, ``test_match``, and ``test_fullmatch``
-  methods that work like ``search``, ``match``, and ``fullmatch``,
-  but only return ``True`` or ``False`` to indicate
-  whether the match was successful.
-  These methods should be faster than the full versions,
-  especially for patterns with capturing groups.
+To install, you must first install the prerequisites:
 
+* The `re2 library from Google <http://code.google.com/p/re2/>`_
+* The Python development headers (e.g. *sudo apt-get install python-dev*)
+* A build environment with ``g++`` (e.g. *sudo apt-get install build-essential*)
 
-Missing Features
-================
+After the prerequisites are installed, you can try installing using ``easy_install``:
+    $ sudo easy_install re2
 
-* No substitution methods.
-* No flags.
-* No ``split``, ``findall``, or ``finditer``.
-* No top-level convenience functions like ``search`` and ``match``.
-  (Just use compile.)
-* No compile cache.
-  (If you care enough about performance to use RE2,
-  you probably care enough to cache your own patterns.)
-* No ``lastindex`` or ``lastgroup`` on ``Match`` objects.
+if you have setuptools installed (or use ``pip``).
+
+If you don't want to use ``setuptools``, you can alternatively download the tarball from `pypi <http://pypi.python.org/pypi/re2/>`_.
+
+Alternative to those, you can clone this repository and try installing it from there. To do this, run::
+
+    $ git clone git://github.com/axiak/pyre2.git
+    $ cd pyre2.git
+    $ sudo python setup.py install
+
+Performance
+===========
+
+More details to come. Performed well on shootout with all regex engines. I will have
+a detailed analysis of features versus python's ``re`` soon.
+
+If you do use this module, you *should* pre-compile your regex's. This module does
+not contain a regex cache.
 
 
 Current Status
 ==============
 
-pyre2 has only received basic testing,
-and I am by no means a Python extension expert,
-so it is quite possible that it contains bugs.
-I'd guess the most likely are reference leaks in error cases.
-
-RE2 doesn't build with fPIC, so I had to bulid it with
-
-::
-
-  make CFLAGS='-fPIC -c -Wall -Wno-sign-compare -O3 -g -I.'
-
-I also had to add it to my compiler search path when building the module
-with a command like
-
-::
-
-  env CPPFLAGS='-I/path/to/re2' LDFLAGS='-L/path/to/re2/obj' ./setup.py build
-
+pyre2 has only received basic testing. Please use it
+and let me know if you run into any issues!
 
 Contact
 =======
 
-You can file bug reports on GitHub, or email the author:
-David Reiss <dreiss@facebook.com>.
+You can file bug reports on GitHub, or contact the author:
+`Mike Axiak  contact page <http://mike.axiak.net/contact>`_.
+
+Tests
+=====
+
+If you would like to help, one thing that would be very useful
+is writing comprehensive tests for this. It's actually really easy:
+
+* Come up with regular expression problems using the regular python 're' module.
+* Write a session in python traceback format `Example <http://github.com/axiak/pyre2/blob/master/tests/search.txt>`_.
+* Replace your ``import re`` with ``import re2 as re``.
+* Save it as a .txt file in the tests directory. You can comment on it however you like and indent the code with 4 spaces.
+
+Missing Features
+================
+
+Currently the features missing are:
+
+* If you use substitution methods without a callback, a non 0/1 maxsplit argument is not supported.
+* No compile cache.
+  (If you care enough about performance to use RE2,
+  you probably care enough to cache your own patterns.)
+
+
+Credits
+=======
+
+Though I ripped out the code, I'd like to thank David Reiss
+and Facebook for the initial inspiration. Plus, I got to
+gut this readme file!
+
+Moreover, this library would of course not be possible if not for
+the immense work of the team at RE2 and the few people who work
+on Cython.
