@@ -362,7 +362,10 @@ cdef class Pattern:
             if maxsplit and num_split >= maxsplit:
                 break
 
-        resultlist.append(sp.data()[pos:])
+        if encoded:
+            resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
+        else:
+            resultlist.append(sp.data()[pos:])
         del matches
         del sp
         return resultlist

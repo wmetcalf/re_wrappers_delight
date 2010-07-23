@@ -110,7 +110,6 @@ cdef extern from "re2.h" namespace "re2":
 # This header is used for ways to hack^Wbypass the cython
 # issues.
 cdef extern from "_re2macros.h":
-
     StringPiece * new_StringPiece_array(int) nogil
 
     # This fixes the bug Cython #548 whereby reference returns
