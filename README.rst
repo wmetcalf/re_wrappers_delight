@@ -56,14 +56,14 @@ To install, you must first install the prerequisites:
 * The Python development headers (e.g. *sudo apt-get install python-dev*)
 * A build environment with ``g++`` (e.g. *sudo apt-get install build-essential*)
 
-After the prerequisites are installed, you can try installing using ``easy_install``::
+After the prerequisites are installed, you can try installing using ``easy_install``:
     $ sudo easy_install re2
 
 if you have setuptools installed (or use ``pip``).
 
 If you don't want to use ``setuptools``, you can alternatively download the tarball from `pypi <http://pypi.python.org/pypi/re2/>`_.
 
-Alternative to those, you can clone this repository and try installing it from there. To this, run::
+Alternative to those, you can clone this repository and try installing it from there. To do this, run::
 
     $ git clone git://github.com/axiak/pyre2.git
     $ cd pyre2.git
