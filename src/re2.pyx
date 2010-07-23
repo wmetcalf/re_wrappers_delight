@@ -66,6 +66,8 @@ cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * l
     # First it will try treating it as a str object, but failing that
     # it will move to utf-8. If utf8 does not work, then it has to be
     # a non-supported encoding.
+    cstring[0] == NULL
+
     if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) != -1:
         # Success!
         return 0
@@ -74,19 +76,16 @@ cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * l
         return -1
 
     # Now we have a unicode object. Treat it as utf8.
-    pystring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AsUnicode(pystring),
-                                                   len(pystring),#python_unicode.PyUnicode_GET_DATA_SIZE(pystring),
+    newstring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AsUnicode(pystring),
+                                                   python_unicode.PyUnicode_GET_SIZE(pystring),
                                                    "strict")
-    if _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length) == -1:
+
+    if _re2.PyObject_AsCharBuffer(newstring, <_re2.const_char_ptr*> cstring, length) == -1:
+        return -1
+
+    if cstring[0] == NULL:
         return -1
     return 1
-
-def stringtest(pystring):
-    cdef int length
-    cdef char * ptr
-    if pystring_to_bytestring(pystring, &ptr, &length) == -1:
-        raise ValueError("boo")
-    return ptr[:length]
 
 cdef class Match:
     cdef _re2.StringPiece * matches
@@ -242,7 +241,6 @@ cdef class Pattern:
         Scan through string looking for a match, and return a corresponding
         Match instance. Return None if no position in the string matches.
         """
-        self._print_pattern()
         return self._search(string, pos, endpos, _re2.UNANCHORED)
 
 
@@ -250,7 +248,6 @@ cdef class Pattern:
         """
         Matches zero or more characters at the beginning of the string.
         """
-        self._print_pattern()
         return self._search(string, pos, endpos, _re2.ANCHOR_START)
 
     cdef _print_pattern(self):
@@ -266,7 +263,6 @@ cdef class Pattern:
         RE pattern in string. For each match, the iterator returns a
         match object.
         """
-        self._print_pattern()
         cdef int size
         cdef int result
         cdef char * cstring
@@ -320,7 +316,6 @@ cdef class Pattern:
         split(string[, maxsplit = 0]) --> list
         Split a string by the occurances of the pattern.
         """
-        self._print_pattern()
         cdef int size
         cdef int num_groups = 1
         cdef int result
@@ -394,7 +389,6 @@ cdef class Pattern:
         the leftmost non-overlapping occurrences of pattern with the
         replacement repl.
         """
-        self._print_pattern()
         cdef int size
         cdef char * cstring
         cdef _re2.StringPiece * sp
