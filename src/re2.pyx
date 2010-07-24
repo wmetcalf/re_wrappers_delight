@@ -291,7 +291,7 @@ cdef class Pattern:
                 if self.ngroups > 1:
                     resultlist.append(m.groups())
                 else:
-                    resultlist.append(m.group(0))
+                    resultlist.append(m.group(self.ngroups - 1))
             else:
                 resultlist.append(m)
         del sp
