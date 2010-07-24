@@ -70,6 +70,9 @@ Alternative to those, you can clone this repository and try installing it from t
     $ cd pyre2.git
     $ sudo python setup.py install
 
+If you want to make changes to the bindings, you must have Cython >=0.13, which
+is as yet unreleased but is available from the `Cython hg repository <http://hg.cython.org/cython-devel/>`_.
+
 Unicode Support
 ===============
 
