@@ -13,6 +13,10 @@ import simplejson
 
 import re2
 import re
+try:
+    import regex
+except ImportError:
+    regex = None
 
 import os
 import gzip
@@ -38,8 +42,12 @@ def main():
     # Run all of the performance comparisons.
     for testname, method in tests.items():
         benchmarks[testname] = {}
-        results = [None, None]
-        for i, module in enumerate((re, re2)):
+        if regex is not None:
+            modules = (re, re2, regex)
+        else:
+            modules = (re, re2)
+        results = [None for module in modules]
+        for i, module in enumerate(modules):
             # We pre-compile the pattern, because that's
             # what people do.
             current_re[0] = module.compile(method.pattern)
@@ -53,9 +61,9 @@ def main():
                                                      method.__doc__.strip(),
                                                      method.pattern,
                                                      method.num_runs)
-
-        if results[0] != results[1]:
-            raise ValueError("re2 output is not the same as re output: %s" % testname)
+        for i in range(len(results) - 1):
+            if results[i] != results[i + 1]:
+                raise ValueError("re2 output is not the same as re output: %s" % testname)
 
     benchmarks_to_ReST(benchmarks)
 
@@ -64,14 +72,20 @@ def benchmarks_to_ReST(benchmarks):
     """
     Convert dictionary to a nice table for ReST.
     """
-    headers = ('Test', 'Description', '# total runs', '``re`` time(s)', '``re2`` time(s)', '% total time')
+    if regex is not None:
+        headers = ('Test', 'Description', '# total runs', '``re`` time(s)', '``re2`` time(s)', '% ``re`` time', '``regex`` time(s)', '% ``regex`` time')
+    else:
+        headers = ('Test', 'Description', '# total runs', '``re`` time(s)', '``re2`` time(s)', '% ``regex`` time')
     table = [headers]
     f = lambda x: "%0.3f" % x
     p = lambda x: "%0.2f%%" % (x * 100)
 
     for test, data in benchmarks.items():
         row = [test, data["re"][1], str(data["re"][3]), f(data["re"][0]), f(data["re2"][0])]
+        
         row.append(p(data["re2"][0] / data["re"][0]))
+        if regex is not None:
+            row.extend((f(data["regex"][0]), p(data["re2"][0] / data["regex"][0])))
         table.append(row)
     col_sizes = [0] * len(table[0])
     for col in range(len(table[0])):
