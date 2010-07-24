@@ -29,7 +29,7 @@ cdef extern from "<map>" namespace "std":
 
 
 cdef extern from "Python.h":
-    int PyObject_AsCharBuffer(object, const_char_ptr *, int *)
+    int PyObject_AsCharBuffer(object, const_char_ptr *, Py_ssize_t *)
     char * PyString_AS_STRING(object)
 
 cdef extern from "stringpiece.h" namespace "re2":

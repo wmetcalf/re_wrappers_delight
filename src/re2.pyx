@@ -74,7 +74,7 @@ cdef inline object unicode_to_bytestring(object pystring, int * encoded):
         encoded[0] = 0
     return pystring
 
-cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * length):
+cdef inline int pystring_to_bytestring(object pystring, char ** cstring, Py_ssize_t * length):
     # This function will convert a pystring to a bytesstring, placing
     # the char * in cstring, and the length in length.
     # First it will try treating it as a str object, but failing that
@@ -202,7 +202,7 @@ cdef class Pattern:
         Scan through string looking for a match, and return a corresponding
         Match instance. Return None if no position in the string matches.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef int result
         cdef char * cstring
         cdef int encoded = 0
@@ -259,7 +259,7 @@ cdef class Pattern:
         of match objects.
         """
         # FIXME should return an iterator according to spec
-        cdef int size
+        cdef Py_ssize_t size
         cdef int result
         cdef char * cstring
         cdef _re2.StringPiece * sp
@@ -315,7 +315,7 @@ cdef class Pattern:
         split(string[, maxsplit = 0]) --> list
         Split a string by the occurances of the pattern.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef int num_groups = 1
         cdef int result
         cdef int endpos
@@ -391,7 +391,7 @@ cdef class Pattern:
         the leftmost non-overlapping occurrences of pattern with the
         replacement repl.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef char * cstring
         cdef _re2.StringPiece * sp
         cdef _re2.cpp_string * input_str
@@ -431,7 +431,7 @@ cdef class Pattern:
         This function is probably the hardest to implement correctly.
         This is my first attempt, but if anybody has a better solution, please help out.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef int result
         cdef int endpos
         cdef int pos = 0
@@ -497,7 +497,7 @@ def compile(pattern, int flags=0):
     Compile a regular expression pattern, returning a pattern object.
     """
     cdef char * string
-    cdef int length
+    cdef Py_ssize_t length
     cdef _re2.StringPiece * s
     cdef _re2.Options opts
     cdef int error_code
