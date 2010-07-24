@@ -1,0 +1,4 @@
+0.2.8) NOT RELEASED YET
+    - Fixed 64-bit support (thanks alec)
+    - Fixed findall to support python symantics (thanks alec)
+
