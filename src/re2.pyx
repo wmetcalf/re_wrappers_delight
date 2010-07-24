@@ -17,8 +17,8 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
-VERSION = (0, 2, 6)
-VERSION_HEX = 0x000206
+VERSION = (0, 2, 8)
+VERSION_HEX = 0x000208
 
 cdef int current_notification = FALLBACK_WARNING
 
@@ -253,12 +253,7 @@ cdef class Pattern:
         sys.stdout.flush()
 
 
-    def finditer(self, object string, int pos=0, int endpos=-1):
-        """
-        Return all non-overlapping matches of pattern in string as a list
-        of match objects.
-        """
-        # FIXME should return an iterator according to spec
+    cdef _finditer(self, object string, int pos=0, int endpos=-1, int as_match=0):
         cdef Py_ssize_t size
         cdef int result
         cdef char * cstring
@@ -292,23 +287,30 @@ cdef class Pattern:
             m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
-            m.init_groups()
-            resultlist.append(m)
+            if as_match:
+                if self.ngroups > 1:
+                    resultlist.append(m.groups())
+                else:
+                    resultlist.append(m.group(0))
+            else:
+                resultlist.append(m)
         del sp
         return resultlist
+
+    def finditer(self, object string, int pos=0, int endpos=-1):
+        """
+        Return all non-overlapping matches of pattern in string as a list
+        of match objects.
+        """
+        # FIXME should return an iterator according to spec
+        return self._finditer(string, pos, endpos, 0)
 
     def findall(self, object string, int pos=0, int endpos=-1):
         """
         Return all non-overlapping matches of pattern in string as a list
         of strings.
         """
-        def chooser(Match match):
-            if match.nmatches > 1:
-                return match.groups()
-            else:
-                return match.group(0)
-        return map(chooser, self.finditer(string, pos, endpos))
-
+        return self._finditer(string, pos, endpos, 1)
 
     def split(self, string, int maxsplit=0):
         """
@@ -473,7 +475,6 @@ cdef class Pattern:
             m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
-            m.init_groups()
             resultlist.append(callback(m) or '')
 
             num_repl += 1
