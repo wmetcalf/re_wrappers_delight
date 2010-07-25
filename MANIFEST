@@ -16,3 +16,8 @@
 ./src/re2.pyx
 ./MANIFEST
 ./setup.py
+./tests/performance.py
+./tests/wikipages.xml.gz
+./tests/sub.txt
+./tests/unicode.txt
+./tests/split.txt

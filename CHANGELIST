@@ -1,0 +1,5 @@
+0.2.8) NOT RELEASED YET
+    - Input patterns are now kept for Python compatibility (alec)
+    - Fixed 64-bit support (alec)
+    - Fixed findall to support python symantics (alec)
+

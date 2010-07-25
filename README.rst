@@ -56,7 +56,8 @@ To install, you must first install the prerequisites:
 * The Python development headers (e.g. *sudo apt-get install python-dev*)
 * A build environment with ``g++`` (e.g. *sudo apt-get install build-essential*)
 
-After the prerequisites are installed, you can try installing using ``easy_install``:
+After the prerequisites are installed, you can try installing using ``easy_install``::
+
     $ sudo easy_install re2
 
 if you have setuptools installed (or use ``pip``).
@@ -69,15 +70,44 @@ Alternative to those, you can clone this repository and try installing it from t
     $ cd pyre2.git
     $ sudo python setup.py install
 
+If you want to make changes to the bindings, you must have Cython >=0.13, which
+is as yet unreleased but is available from the `Cython hg repository <http://hg.cython.org/cython-devel/>`_.
+
+Unicode Support
+===============
+
+One current issue is Unicode support. As you may know, ``RE2`` supports UTF8,
+which is certainly distinct from unicode. Right now the module will automatically
+encode any unicode string into utf8 for you, which is *slow* (it also has to
+decode utf8 strings back into unicode objects on every substitution or split).
+Therefore, you are better off using bytestrings in utf8 while working with RE2
+and encoding things after everything you need done is finished.
+
 Performance
 ===========
 
-More details to come. Performed well on shootout with all regex engines. I will have
-a detailed analysis of features versus python's ``re`` soon.
+Performance is of course the point of this module, so it better perform well.
+Regular expressions vary widely in complexity, and the salient feature of ``RE2`` is
+that it behaves well asymptotically. This being said, for very simple substitutions,
+I've found that occasionally python's regular ``re`` module is actually slightly faster.
+However, when the ``re`` module gets slow, it gets *really* slow, while this module
+buzzes along.
 
-If you do use this module, you *should* pre-compile your regex's. This module does
-not contain a regex cache.
+In the below example, I'm running the data against 8MB of text from the collosal Wikipedia
+XML file. I'm running them multiple times, being careful to use the ``timeit`` module.
+To see more details, please see the `performance script <http://github.com/axiak/pyre2/tree/master/tests/performance.py>`_.
 
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+-------------+-----------------+----------------+
+|Test             |Description                                                                |# total runs|``re`` time(s)|``re2`` time(s)|% ``re`` time|``regex`` time(s)|% ``regex`` time|
++=================+===========================================================================+============+==============+===============+=============+=================+================+
+|Findall URI|Email|Find list of '([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)'|2           |19.961        |0.336          |1.68%        |11.463           |2.93%           |
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+-------------+-----------------+----------------+
+|Replace WikiLinks|This test replaces links of the form [[Obama|Barack_Obama]] to Obama.      |100         |16.032        |2.622          |16.35%       |2.895            |90.54%          |
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+-------------+-----------------+----------------+
+|Remove WikiLinks |This test splits the data by the <page> tag.                               |100         |15.983        |1.406          |8.80%        |2.252            |62.43%          |
++-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+-------------+-----------------+----------------+
+
+Feel free to add more speed tests to the bottom of the script and send a pull request my way!
 
 Current Status
 ==============

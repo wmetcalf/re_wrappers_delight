@@ -17,8 +17,8 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
-VERSION = (0, 2, 4)
-VERSION_HEX = 0x000204
+VERSION = (0, 2, 8)
+VERSION_HEX = 0x000208
 
 cdef int current_notification = FALLBACK_WARNING
 
@@ -49,7 +49,7 @@ cimport python_unicode
 from cython.operator cimport preincrement as inc, dereference as deref
 import warnings
 
-cdef inline object cpp_to_pystring(_re2.cpp_string input):
+cdef object cpp_to_pystring(_re2.cpp_string input):
     # This function is a quick converter from a std::string object
     # to a python string. By taking the slice we go to the right size,
     # despite spurious or missing null characters.
@@ -63,7 +63,7 @@ cdef inline object char_to_utf8(_re2.const_char_ptr input, int length):
     # This function converts a C string to a utf8 object.
     return python_unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
 
-cdef unicode_to_bytestring(object pystring, int * encoded):
+cdef inline object unicode_to_bytestring(object pystring, int * encoded):
     # This function will convert a utf8 string to a bytestring object.
     if python_unicode.PyUnicode_Check(pystring):
         pystring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AS_UNICODE(pystring),
@@ -74,7 +74,7 @@ cdef unicode_to_bytestring(object pystring, int * encoded):
         encoded[0] = 0
     return pystring
 
-cdef inline int pystring_to_bytestring(object pystring, char ** cstring, int * length):
+cdef inline int pystring_to_bytestring(object pystring, char ** cstring, Py_ssize_t * length):
     # This function will convert a pystring to a bytesstring, placing
     # the char * in cstring, and the length in length.
     # First it will try treating it as a str object, but failing that
@@ -193,16 +193,17 @@ cdef class Match:
 
 
 cdef class Pattern:
-    cdef _re2.RE2 * pattern
+    cdef _re2.RE2 * re_pattern
     cdef int ngroups
     cdef bint encoded
+    cdef public object pattern
 
     cdef _search(self, string, int pos, int endpos, _re2.re2_Anchor anchoring):
         """
         Scan through string looking for a match, and return a corresponding
         Match instance. Return None if no position in the string matches.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef int result
         cdef char * cstring
         cdef int encoded = 0
@@ -219,14 +220,14 @@ cdef class Pattern:
 
         sp = new _re2.StringPiece(cstring, size)
         with nogil:
-            result = self.pattern.Match(sp[0], <int>pos, anchoring, matches, self.ngroups + 1)
+            result = self.re_pattern.Match(sp[0], <int>pos, anchoring, matches, self.ngroups + 1)
 
         del sp
         if result == 0:
             return None
         m.matches = matches
         m.encoded = <bint>(encoded) or self.encoded
-        m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
+        m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
         m.nmatches = self.ngroups + 1
         m.match_string = string
         return m
@@ -248,18 +249,13 @@ cdef class Pattern:
 
     cdef _print_pattern(self):
         cdef _re2.cpp_string * s
-        s = <_re2.cpp_string *>_re2.addressofs(self.pattern.pattern())
+        s = <_re2.cpp_string *>_re2.addressofs(self.re_pattern.pattern())
         print cpp_to_pystring(s[0]) + "\n"
         sys.stdout.flush()
 
 
-    def findall(self, object string, int pos=0, int endpos=-1):
-        """
-        Return a list over all non-overlapping matches for the
-        RE pattern in string. For each match, the iterator returns a
-        match object.
-        """
-        cdef int size
+    cdef _finditer(self, object string, int pos=0, int endpos=-1, int as_match=0):
+        cdef Py_ssize_t size
         cdef int result
         cdef char * cstring
         cdef _re2.StringPiece * sp
@@ -281,7 +277,7 @@ cdef class Pattern:
         while True:
             with nogil:
                 matches = _re2.new_StringPiece_array(self.ngroups + 1)
-                result = self.pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
+                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
             if result == 0:
                 break
             # offset the pos to move to the next point
@@ -289,30 +285,40 @@ cdef class Pattern:
             m = Match()
             m.encoded = encoded
             m.matches = matches
-            m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
+            m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
-            m.init_groups()
-            resultlist.append(m)
+            if as_match:
+                if self.ngroups > 1:
+                    resultlist.append(m.groups())
+                else:
+                    resultlist.append(m.group(self.ngroups - 1))
+            else:
+                resultlist.append(m)
         del sp
         return resultlist
 
     def finditer(self, object string, int pos=0, int endpos=-1):
         """
-        Return a list over all non-overlapping matches for the
-        RE pattern in string. For each match, the iterator returns a
-        match object.
-        NOTE: In re2 THIS IS A SYNONYM FOR findall!
+        Return all non-overlapping matches of pattern in string as a list
+        of match objects.
         """
-        return self.findall(string, pos, endpos)
+        # FIXME should return an iterator according to spec
+        return self._finditer(string, pos, endpos, 0)
 
+    def findall(self, object string, int pos=0, int endpos=-1):
+        """
+        Return all non-overlapping matches of pattern in string as a list
+        of strings.
+        """
+        return self._finditer(string, pos, endpos, 1)
 
     def split(self, string, int maxsplit=0):
         """
         split(string[, maxsplit = 0]) --> list
         Split a string by the occurances of the pattern.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef int num_groups = 1
         cdef int result
         cdef int endpos
@@ -344,7 +350,7 @@ cdef class Pattern:
 
         while True:
             with nogil:
-                result = self.pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, num_groups)
+                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, num_groups)
             if result == 0:
                 break
 
@@ -388,7 +394,7 @@ cdef class Pattern:
         the leftmost non-overlapping occurrences of pattern with the
         replacement repl.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef char * cstring
         cdef _re2.StringPiece * sp
         cdef _re2.cpp_string * input_str
@@ -400,7 +406,8 @@ cdef class Pattern:
             return self._subn_callback(repl, string, count)
 
         string = unicode_to_bytestring(string, &encoded)
-        if pystring_to_bytestring(string, &cstring, &size) == -1:
+        repl = unicode_to_bytestring(repl, &encoded)
+        if pystring_to_bytestring(repl, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
         encoded = <bint>encoded or self.encoded
 
@@ -408,11 +415,11 @@ cdef class Pattern:
         input_str = new _re2.cpp_string(string)
         if not count:
             total_replacements = _re2.pattern_GlobalReplace(input_str,
-                                                            self.pattern[0],
+                                                            self.re_pattern[0],
                                                             sp[0])
         elif count == 1:
             total_replacements = _re2.pattern_Replace(input_str,
-                                                      self.pattern[0],
+                                                      self.re_pattern[0],
                                                       sp[0])
         else:
             raise NotImplementedError("So far pyre2 does not support custom replacement counts")
@@ -427,7 +434,7 @@ cdef class Pattern:
         This function is probably the hardest to implement correctly.
         This is my first attempt, but if anybody has a better solution, please help out.
         """
-        cdef int size
+        cdef Py_ssize_t size
         cdef int result
         cdef int endpos
         cdef int pos = 0
@@ -452,7 +459,7 @@ cdef class Pattern:
         while True:
             with nogil:
                 matches = _re2.new_StringPiece_array(self.ngroups + 1)
-                result = self.pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
+                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
             if result == 0:
                 break
 
@@ -466,10 +473,9 @@ cdef class Pattern:
             m = Match()
             m.encoded = encoded
             m.matches = matches
-            m.named_groups = _re2.addressof(self.pattern.NamedCapturingGroups())
+            m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
-            m.init_groups()
             resultlist.append(callback(m) or '')
 
             num_repl += 1
@@ -493,7 +499,7 @@ def compile(pattern, int flags=0):
     Compile a regular expression pattern, returning a pattern object.
     """
     cdef char * string
-    cdef int length
+    cdef Py_ssize_t length
     cdef _re2.StringPiece * s
     cdef _re2.Options opts
     cdef int error_code
@@ -501,6 +507,8 @@ def compile(pattern, int flags=0):
 
     if isinstance(pattern, Pattern):
         return pattern
+
+    cdef object original_pattern = pattern
 
     cdef str strflags = ''
     # Set the options given the flags above.
@@ -548,7 +556,8 @@ def compile(pattern, int flags=0):
         return re.compile(pattern, flags)
 
     cdef Pattern pypattern = Pattern()
-    pypattern.pattern = re_pattern
+    pypattern.pattern = original_pattern
+    pypattern.re_pattern = re_pattern
     pypattern.ngroups = re_pattern.NumberOfCapturingGroups()
     pypattern.encoded = <bint>encoded
     del s
@@ -593,7 +602,7 @@ def split(pattern, string, int maxsplit=0):
     """
     return compile(pattern).split(string, maxsplit)
 
-def sub(pattern, string, int count=0):
+def sub(pattern, repl, string, int count=0):
     """
     Return the string obtained by replacing the leftmost
     non-overlapping occurrences of the pattern in string by the
@@ -602,9 +611,9 @@ def sub(pattern, string, int count=0):
     a callable, it's passed the match object and must return
     a replacement string to be used.
     """
-    return compile(pattern).sub(string, count)
+    return compile(pattern).sub(repl, string, count)
 
-def subn(pattern, string, int count=0):
+def subn(pattern, repl, string, int count=0):
     """
     Return a 2-tuple containing (new_string, number).
     new_string is the string obtained by replacing the leftmost
@@ -615,4 +624,4 @@ def subn(pattern, string, int count=0):
     If it is a callable, it's passed the match object and must
     return a replacement string to be used.
     """
-    return compile(pattern).subn(string, count)
+    return compile(pattern).subn(repl, string, count)
