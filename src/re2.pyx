@@ -150,6 +150,26 @@ cdef class Match:
         end = start + piece.length()
         return (start, end)
 
+    def expand(self, object template):
+        # TODO - This can be optimized to work a bit faster in C.
+        # Expand a template with groups
+        items = template.split('\\')
+        for i, item in enumerate(items[1:]):
+            if item[0].isdigit():
+                # Number group
+                if item[0] == '0':
+                    items[i + 1] = '\x00' + item[1:]
+                else:
+                    items[i + 1] = self.group(int(item[0])) + item[1:]
+            elif item[:2] == 'g<' and '>' in item:
+                # This is a named group
+                name, rest = item[2:].split('>', 1)
+                items[i + 1] = self.group(name) + rest
+            else:
+                # This isn't a template at all
+                items[i + 1] = '\\' + item
+        return ''.join(items)
+
     def groupdict(self):
         cdef _re2.stringintmapiterator it
         cdef dict result = {}
