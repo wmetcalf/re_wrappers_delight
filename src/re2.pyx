@@ -2,6 +2,7 @@
 # Import re flags to be compatible.
 import sys
 import re
+
 I = re.I
 IGNORECASE = re.IGNORECASE
 M = re.M
@@ -19,6 +20,9 @@ FALLBACK_EXCEPTION = 2
 
 VERSION = (0, 2, 8)
 VERSION_HEX = 0x000208
+
+# Type of compiled re object from Python stdlib
+SREPattern = type(re.compile(''))
 
 cdef int current_notification = FALLBACK_WARNING
 
@@ -505,7 +509,7 @@ def compile(pattern, int flags=0):
     cdef int error_code
     cdef int encoded = 0
 
-    if isinstance(pattern, Pattern):
+    if isinstance(pattern, (Pattern, SREPattern)):
         return pattern
 
     cdef object original_pattern = pattern
@@ -548,8 +552,10 @@ def compile(pattern, int flags=0):
         if current_notification == <int>FALLBACK_EXCEPTION:
             # Raise an exception regardless of the type of error.
             raise RegexError(error_msg)
-        elif error_code != _re2.ErrorBadPerlOp and error_code != _re2.ErrorRepeatSize:
-            # Raise an error because these will not be fixed by using the ``re`` module.
+        elif error_code not in (_re2.ErrorBadPerlOp, _re2.ErrorRepeatSize,
+                                _re2.ErrorBadEscape):
+            # Raise an error because these will not be fixed by using the 
+            # ``re`` module.
             raise RegexError(error_msg)
         elif current_notification == <int>FALLBACK_WARNING:
             warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
