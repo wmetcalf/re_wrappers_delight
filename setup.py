@@ -46,7 +46,7 @@ else:
 
 setup(
     name="re2",
-    version="0.2.8",
+    version="0.2.10",
     description="Python wrapper for Google's RE2 using Cython",
     author="Mike Axiak",
     license="New BSD License",
