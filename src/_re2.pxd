@@ -32,7 +32,7 @@ cdef extern from "Python.h":
     int PyObject_AsCharBuffer(object, const_char_ptr *, Py_ssize_t *)
     char * PyString_AS_STRING(object)
 
-cdef extern from "stringpiece.h" namespace "re2":
+cdef extern from "re2/stringpiece.h" namespace "re2":
     cdef cppclass StringPiece:
         StringPiece()
         StringPiece(const_char_ptr, int)
@@ -43,7 +43,7 @@ cdef extern from "stringpiece.h" namespace "re2":
 
     ctypedef StringPiece const_StringPiece "const StringPiece"
  
-cdef extern from "re2.h" namespace "re2":
+cdef extern from "re2/re2.h" namespace "re2":
     cdef enum Anchor:
         UNANCHORED "RE2::UNANCHORED"
         ANCHOR_START "RE2::ANCHOR_START"
