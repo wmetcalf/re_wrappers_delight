@@ -18,8 +18,8 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
-VERSION = (0, 2, 8)
-VERSION_HEX = 0x000208
+VERSION = (0, 2, 10)
+VERSION_HEX = 0x00020A
 
 # Type of compiled re object from Python stdlib
 SREPattern = type(re.compile(''))
@@ -220,7 +220,13 @@ cdef class Pattern:
     cdef _re2.RE2 * re_pattern
     cdef int ngroups
     cdef bint encoded
+    cdef int _flags
     cdef public object pattern
+
+
+    property flags:
+        def __get__(self):
+            return self._flags
 
     cdef _search(self, string, int pos, int endpos, _re2.re2_Anchor anchoring):
         """
@@ -586,6 +592,7 @@ def compile(pattern, int flags=0):
     pypattern.re_pattern = re_pattern
     pypattern.ngroups = re_pattern.NumberOfCapturingGroups()
     pypattern.encoded = <bint>encoded
+    pypattern._flags = flags
     del s
     return pypattern
 

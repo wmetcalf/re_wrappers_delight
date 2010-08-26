@@ -1,3 +1,6 @@
+0.2.10) TO BE RELEASED
+    - Added .flags to pattern to make that transparent (axiak)
+
 0.2.8) 2010-07-27
     - Added .expand() to group objects (axiak)
     - Input patterns are now kept for Python compatibility (alec)

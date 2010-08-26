@@ -54,7 +54,7 @@ def get_long_description():
     
 setup(
     name="re2",
-    version="0.2.8",
+    version="0.2.10",
     description="Python wrapper for Google's RE2 using Cython",
     long_description=get_long_description(),
     author="Mike Axiak",
@@ -64,7 +64,7 @@ setup(
     ext_modules = [Extension("re2",
                              ext_files,
                              language="c++",
-                             include_dirs=[os.path.join(re2_prefix, "include", "re2")],
+                             include_dirs=[os.path.join(re2_prefix, "include")],
                              libraries=["re2"],
                              library_dirs=[os.path.join(re2_prefix, "lib")],
                              runtime_library_dirs=[os.path.join(re2_prefix, "lib")],
