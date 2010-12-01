@@ -123,7 +123,14 @@ cdef class Match:
         self.init_groups()
         return self._groups[1:]
 
-    def group(self, groupnum=0):
+    def group(self, *args):
+        if len(args) > 1:
+            return [self.group(i) for i in args]
+        elif len(args) > 0:
+            groupnum = args[0]
+        else:
+            groupnum = 0
+
         cdef int idx
 
         self.init_groups()
