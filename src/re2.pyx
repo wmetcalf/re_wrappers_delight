@@ -125,7 +125,7 @@ cdef class Match:
 
     def group(self, *args):
         if len(args) > 1:
-            return [self.group(i) for i in args]
+            return tuple([self.group(i) for i in args])
         elif len(args) > 0:
             groupnum = args[0]
         else:
