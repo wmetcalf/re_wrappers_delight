@@ -22,3 +22,9 @@ Zero matches is an empty list:
 
     >>> re2.findall("(f)", "gggg")
     []
+
+If pattern matches an empty string, do it only once at the end:
+
+    >>> re2.findall(".*", "foo")
+    ['foo', '']
+

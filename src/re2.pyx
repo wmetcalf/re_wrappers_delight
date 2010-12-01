@@ -306,8 +306,6 @@ cdef class Pattern:
                 result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
             if result == 0:
                 break
-            # offset the pos to move to the next point
-            pos = matches[0].data() - cstring + matches[0].length()
             m = Match()
             m.encoded = encoded
             m.matches = matches
@@ -321,6 +319,10 @@ cdef class Pattern:
                     resultlist.append(m.group(self.ngroups - 1))
             else:
                 resultlist.append(m)
+            if pos == size:
+                break
+            # offset the pos to move to the next point
+            pos = matches[0].data() - cstring + matches[0].length()
         del sp
         return resultlist
 
