@@ -551,6 +551,10 @@ def compile(pattern, int flags=0):
     _cache[cachekey] = p
     return p
 
+# Ironically, to find an odd number of backslashes in the pattern, we need backreferences
+# so we use the re module
+odd_number_of_backslashes = r'((?<!\\)(?:(\\*)\2))\\'
+re_backreferences = re.compile(odd_number_of_backslashes + r'\d')
 def _compile(pattern, int flags=0):
     """
     Compile a regular expression pattern, returning a pattern object.
@@ -564,6 +568,9 @@ def _compile(pattern, int flags=0):
 
     if isinstance(pattern, Pattern):
         return pattern
+
+    if re_backreferences.search(pattern):
+        return re.compile(pattern, flags)
 
     cdef object original_pattern = pattern
 
