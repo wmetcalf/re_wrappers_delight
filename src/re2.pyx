@@ -234,6 +234,10 @@ cdef class Pattern:
         def __get__(self):
             return self._flags
 
+    property groups:
+        def __get__(self):
+            return self.ngroups
+
     def __dealloc__(self):
         del self.re_pattern
 
