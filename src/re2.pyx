@@ -555,6 +555,10 @@ def compile(pattern, int flags=0):
 # so we use the re module
 odd_number_of_backslashes = r'((?<!\\)(?:(\\*)\2))\\'
 re_backreferences = re.compile(odd_number_of_backslashes + r'\d')
+re_unicode_digit = re.compile(odd_number_of_backslashes + r'((?<!\\)(?:(\\*)\2))\\d')
+re_unicode_alphanum = re.compile(odd_number_of_backslashes + r'((?<!\\)(?:(\\*)\2))\\w')
+re_unicode_space = re.compile(odd_number_of_backslashes + r'((?<!\\)(?:(\\*)\2))\\s')
+
 def _compile(pattern, int flags=0):
     """
     Compile a regular expression pattern, returning a pattern object.
@@ -579,9 +583,11 @@ def _compile(pattern, int flags=0):
     if flags & _I:
         opts.set_case_sensitive(0);
 
-    # The re.U flag is actually ignored since there
-    # are no unicode dependent character classes yet...
     opts.set_encoding(_re2.EncodingUTF8)
+    if flags & _U:
+        pattern = re_unicode_digit.sub(r'\1\\p{Nd}', pattern)
+        pattern = re_unicode_alphanum.sub(r'\1[_\\p{L}\\p{Nd}]', pattern)
+        pattern = re_unicode_digit.sub(r'\1[\\s\\p{Z}]', pattern)
 
     if not (flags & _X):
         opts.set_log_errors(0)
