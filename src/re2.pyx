@@ -100,6 +100,9 @@ cdef class Match:
         self._lastindex = -1
         self._groups = None
 
+    def __dealloc__(self):
+        del self.matches
+
     cdef init_groups(self):
         cdef list groups = []
         cdef int i
@@ -230,6 +233,9 @@ cdef class Pattern:
     property flags:
         def __get__(self):
             return self._flags
+
+    def __dealloc__(self):
+        del self.re_pattern
 
     cdef _search(self, string, int pos, int endpos, _re2.re2_Anchor anchoring):
         """
