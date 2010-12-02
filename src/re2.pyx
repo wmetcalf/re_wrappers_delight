@@ -610,7 +610,7 @@ def _compile(pattern, int flags=0):
             raise RegexError(error_msg)
         elif current_notification == <int>FALLBACK_WARNING:
             warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
-        return re.compile(pattern, flags)
+        return re.compile(original_pattern, flags)
 
     cdef Pattern pypattern = Pattern()
     pypattern.pattern = original_pattern
