@@ -534,8 +534,24 @@ cdef class Pattern:
         else:
             return (''.join(resultlist), num_repl)
 
+_cache = {}
+_cache_repl = {}
+
+_MAXCACHE = 100
 
 def compile(pattern, int flags=0):
+    cachekey = (type(pattern),) + (pattern, flags)
+    p = _cache.get(cachekey)
+    if p is not None:
+        return p
+    p = _compile(pattern, flags)
+
+    if len(_cache) >= _MAXCACHE:
+        _cache.clear()
+    _cache[cachekey] = p
+    return p
+
+def _compile(pattern, int flags=0):
     """
     Compile a regular expression pattern, returning a pattern object.
     """
