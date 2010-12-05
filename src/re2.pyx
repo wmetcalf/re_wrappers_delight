@@ -101,7 +101,7 @@ cdef class Match:
         self._groups = None
 
     def __dealloc__(self):
-        del self.matches
+        _re2.delete_StringPiece_array(self.matches)
 
     cdef init_groups(self):
         cdef list groups = []
@@ -420,7 +420,7 @@ cdef class Pattern:
             resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
         else:
             resultlist.append(sp.data()[pos:])
-        del matches
+        _re2.delete_StringPiece_array(matches)
         del sp
         return resultlist
 
@@ -506,7 +506,7 @@ cdef class Pattern:
                 matches = _re2.new_StringPiece_array(self.ngroups + 1)
                 result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
             if result == 0:
-                del matches
+                _re2.delete_StringPiece_array(matches)
                 break
 
             endpos = matches[0].data() - cstring

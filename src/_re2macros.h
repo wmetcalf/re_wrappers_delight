@@ -9,6 +9,10 @@ static inline re2::StringPiece * new_StringPiece_array(int n)
     re2::StringPiece * sp = new re2::StringPiece[n];
     return sp;
 }
+static inline void delete_StringPiece_array(re2::StringPiece* ptr)
+{
+    delete[] ptr;
+}
 
 #define addressof(A) (&A)
 #define addressofs(A) (&A)

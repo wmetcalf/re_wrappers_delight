@@ -111,6 +111,7 @@ cdef extern from "re2/re2.h" namespace "re2":
 # issues.
 cdef extern from "_re2macros.h":
     StringPiece * new_StringPiece_array(int) nogil
+    void delete_StringPiece_array(StringPiece* ptr) 
 
     # This fixes the bug Cython #548 whereby reference returns
     # cannot be addressed, due to it not being an l-value
