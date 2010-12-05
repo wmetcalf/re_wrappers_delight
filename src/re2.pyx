@@ -506,6 +506,7 @@ cdef class Pattern:
                 matches = _re2.new_StringPiece_array(self.ngroups + 1)
                 result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
             if result == 0:
+                del matches
                 break
 
             endpos = matches[0].data() - cstring
@@ -531,7 +532,6 @@ cdef class Pattern:
             resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
         else:
             resultlist.append(sp.data()[pos:])
-        del matches
         del sp
         if encoded:
             return (u''.join(resultlist), num_repl)
