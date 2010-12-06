@@ -474,12 +474,17 @@ cdef class Pattern:
                                                       self.re_pattern[0],
                                                       sp[0])
         else:
+            del input_str
+            del sp
             raise NotImplementedError("So far pyre2 does not support custom replacement counts")
 
         if encoded:
-            return (cpp_to_utf8(input_str[0]), total_replacements)
+            result = cpp_to_utf8(input_str[0])
         else:
-            return (cpp_to_pystring(input_str[0]), total_replacements)
+            result = cpp_to_pystring(input_str[0])
+        del input_str
+        del sp
+        return (result, total_replacements)
 
     def _subn_callback(self, callback, string, int count=0):
         """
