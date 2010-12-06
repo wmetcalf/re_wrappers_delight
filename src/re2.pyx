@@ -329,7 +329,7 @@ cdef class Pattern:
                 if self.ngroups > 1:
                     resultlist.append(m.groups())
                 else:
-                    resultlist.append(m.group(self.ngroups - 1))
+                    resultlist.append(m.group(self.ngroups))
             else:
                 resultlist.append(m)
             if pos == size:
