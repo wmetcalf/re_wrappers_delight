@@ -28,3 +28,15 @@ Test unicode stickyness
     >>> re.search(ur'(\d)', u'1').group(1)
     u'1'
 
+Test unicode character groups
+
+    >>> re.search(r'\d', u'\u0661', re.UNICODE).group(0)
+    u'\u0661'
+    >>> int(re.search(r'\d', u'\u0661', re.UNICODE).group(0))
+    1
+    >>> re.search(r'\w', u'\u0401')
+    >>> re.search(r'\w', u'\u0401', re.UNICODE).group(0)
+    u'\u0401'
+    >>> re.search(r'\s', u'\u1680', re.UNICODE).group(0)
+    u'\u1680'
+
