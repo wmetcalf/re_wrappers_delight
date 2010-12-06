@@ -271,7 +271,7 @@ cdef class Pattern:
         del sp
         if result == 0:
             return None
-        m.encoded = <bint>(encoded) or self.encoded
+        m.encoded = <bint>(encoded)
         m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
         m.nmatches = self.ngroups + 1
         m.match_string = string
@@ -311,7 +311,7 @@ cdef class Pattern:
         string = unicode_to_bytestring(string, &encoded)
         if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
-        encoded = <bint>encoded or self.encoded
+        encoded = <bint>encoded
 
         if endpos != -1 and endpos < size:
             size = endpos
@@ -383,7 +383,7 @@ cdef class Pattern:
         if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
 
-        encoded = <bint>encoded or self.encoded
+        encoded = <bint>encoded
 
         matches = _re2.new_StringPiece_array(self.ngroups + 1)
         sp = new _re2.StringPiece(cstring, size)
@@ -454,17 +454,19 @@ cdef class Pattern:
         cdef _re2.StringPiece * sp
         cdef _re2.cpp_string * input_str
         cdef total_replacements = 0
+        cdef int string_encoded = 0
+        cdef int repl_encoded = 0
         cdef int encoded = 0
 
         if callable(repl):
             # This is a callback, so let's use the custom function
             return self._subn_callback(repl, string, count)
 
-        string = unicode_to_bytestring(string, &encoded)
-        repl = unicode_to_bytestring(repl, &encoded)
+        string = unicode_to_bytestring(string, &string_encoded)
+        repl = unicode_to_bytestring(repl, &repl_encoded)
         if pystring_to_bytestring(repl, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
-        encoded = <bint>encoded or self.encoded
+        encoded = <bint>string_encoded or <bint>repl_encoded
 
         sp = new _re2.StringPiece(cstring, size)
         input_str = new _re2.cpp_string(string)
@@ -511,7 +513,7 @@ cdef class Pattern:
         string = unicode_to_bytestring(string, &encoded)
         if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
-        encoded = <bint>encoded or self.encoded
+        encoded = <bint>encoded
 
         sp = new _re2.StringPiece(cstring, size)
 

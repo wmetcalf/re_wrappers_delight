@@ -6,3 +6,25 @@ Here are some tests to make sure that utf-8 works
     >>> c = re.compile(a[0])
     >>> c.search(a).group()
     u'\u6211'
+
+Test unicode stickyness
+
+    >>> re.sub(r'x', u'y', 'x')
+    u'y'
+    >>> re.sub(r'x', 'y', u'x')
+    u'y'
+    >>> re.sub(ur'x', 'y', 'x')
+    'y'
+    >>> re.findall(ur'.', 'x')
+    ['x']
+    >>> re.findall(ur'.', u'x')
+    [u'x']
+    >>> re.split(ur',', '1,2,3')
+    ['1', '2', '3']
+    >>> re.split(ur',', u'1,2,3')
+    [u'1', u'2', u'3']
+    >>> re.search(ur'(\d)', '1').group(1)
+    '1'
+    >>> re.search(ur'(\d)', u'1').group(1)
+    u'1'
+
