@@ -20,6 +20,9 @@ FALLBACK_EXCEPTION = 2
 VERSION = (0, 2, 10)
 VERSION_HEX = 0x00020A
 
+# Type of compiled re object from Python stdlib
+SREPattern = type(re.compile(''))
+
 cdef int current_notification = FALLBACK_WARNING
 
 def set_fallback_notification(level):
@@ -582,7 +585,7 @@ def _compile(pattern, int flags=0):
     cdef int error_code
     cdef int encoded = 0
 
-    if isinstance(pattern, Pattern):
+    if isinstance(pattern, (Pattern, SREPattern)):
         return pattern
 
     if re_backreferences.search(pattern):
