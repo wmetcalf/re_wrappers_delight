@@ -368,6 +368,7 @@ cdef class Pattern:
         cdef int result
         cdef int endpos
         cdef int pos = 0
+        cdef int lookahead = 0
         cdef int num_split = 0
         cdef char * cstring
         cdef _re2.StringPiece * sp
@@ -385,36 +386,43 @@ cdef class Pattern:
 
         encoded = <bint>encoded or self.encoded
 
-        if self.ngroups > 0:
-            matches = _re2.new_StringPiece_array(2)
-            num_groups = 2
-        else:
-            matches = _re2.new_StringPiece_array(1)
-
+        matches = _re2.new_StringPiece_array(self.ngroups + 1)
         sp = new _re2.StringPiece(cstring, size)
 
         while True:
             with nogil:
-                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, num_groups)
+                result = self.re_pattern.Match(sp[0], <int>(pos + lookahead), _re2.UNANCHORED, matches, self.ngroups + 1)
             if result == 0:
                 break
 
-            endpos = matches[0].data() - cstring
+            match_start = matches[0].data() - cstring
+            match_end = match_start + matches[0].length()
+
+            # If an empty match, just look ahead until you find something
+            if match_start == match_end:
+                if pos + lookahead == size:
+                    break
+                lookahead += 1
+                continue
+
             if encoded:
-                resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
+                resultlist.append(char_to_utf8(&sp.data()[pos], match_start - pos))
             else:
-                resultlist.append(sp.data()[pos:endpos])
-            # offset the pos to move to the next point
-            pos = endpos + matches[0].length()
-            if num_groups == 2:
-                if encoded:
-                    resultlist.append(char_to_utf8(matches[1].data(), matches[1].length()))
-                else:
-                    resultlist.append(matches[1].data()[:matches[1].length()])
+                resultlist.append(sp.data()[pos:match_start])
+            if self.ngroups > 0:
+                for group in range(self.ngroups):
+                    if encoded:
+                        resultlist.append(char_to_utf8(matches[group + 1].data(), matches[group + 1].length()))
+                    else:
+                        resultlist.append(matches[group + 1].data()[:matches[group + 1].length()])
 
             num_split += 1
             if maxsplit and num_split >= maxsplit:
                 break
+
+            # offset the pos to move to the next point
+            pos = match_end
+            lookahead = 0
 
         if encoded:
             resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
