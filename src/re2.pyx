@@ -595,14 +595,16 @@ def _compile(pattern, int flags=0):
     if flags & _I:
         opts.set_case_sensitive(0);
 
+    opts.set_log_errors(0)
     opts.set_encoding(_re2.EncodingUTF8)
     if flags & _U:
         pattern = re_unicode_digit.sub(r'\1\\p{Nd}', pattern)
         pattern = re_unicode_alphanum.sub(r'\1[_\\p{L}\\p{Nd}]', pattern)
         pattern = re_unicode_digit.sub(r'\1[\\s\\p{Z}]', pattern)
 
-    if not (flags & _X):
-        opts.set_log_errors(0)
+    if flags & _X:
+        # TODO: support verbose patterns
+        return re.compile(original_pattern, flags)
 
     if flags & _S:
         strflags += 's'
