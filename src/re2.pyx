@@ -12,6 +12,7 @@ U = re.U
 UNICODE = re.UNICODE
 X = re.X
 VERBOSE = re.VERBOSE
+escape = re.escape
 
 FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
