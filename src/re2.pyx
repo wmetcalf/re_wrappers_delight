@@ -411,10 +411,13 @@ cdef class Pattern:
                 resultlist.append(sp.data()[pos:match_start])
             if self.ngroups > 0:
                 for group in range(self.ngroups):
-                    if encoded:
-                        resultlist.append(char_to_utf8(matches[group + 1].data(), matches[group + 1].length()))
+                    if matches[group + 1].data() == NULL:
+                        resultlist.append(None)
                     else:
-                        resultlist.append(matches[group + 1].data()[:matches[group + 1].length()])
+                        if encoded:
+                            resultlist.append(char_to_utf8(matches[group + 1].data(), matches[group + 1].length()))
+                        else:
+                            resultlist.append(matches[group + 1].data()[:matches[group + 1].length()])
 
             num_split += 1
             if maxsplit and num_split >= maxsplit:
