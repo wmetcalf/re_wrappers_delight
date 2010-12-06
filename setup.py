@@ -13,8 +13,8 @@ class TestCommand(Command):
         pass
 
     def run(self):
-        import tests.test as test
-        test.testall()
+        from tests import re2_test
+        re2_test.testall()
 
 cmdclass = {'test': TestCommand}
 
