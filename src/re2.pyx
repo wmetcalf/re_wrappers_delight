@@ -95,10 +95,11 @@ cdef class Match:
     cdef tuple _groups
     cdef dict _named_groups
 
-    def __init__(self):
+    def __init__(self, num_groups):
         self._lastgroup = -1
         self._lastindex = -1
         self._groups = None
+        self.matches = _re2.new_StringPiece_array(num_groups + 1)
 
     def __dealloc__(self):
         _re2.delete_StringPiece_array(self.matches)
@@ -251,8 +252,7 @@ cdef class Pattern:
         cdef char * cstring
         cdef int encoded = 0
         cdef _re2.StringPiece * sp
-        cdef _re2.StringPiece * matches = _re2.new_StringPiece_array(self.ngroups + 1)
-        cdef Match m = Match()
+        cdef Match m = Match(self.ngroups + 1)
 
         string = unicode_to_bytestring(string, &encoded)
         if pystring_to_bytestring(string, &cstring, &size) == -1:
@@ -263,12 +263,11 @@ cdef class Pattern:
 
         sp = new _re2.StringPiece(cstring, size)
         with nogil:
-            result = self.re_pattern.Match(sp[0], <int>pos, anchoring, matches, self.ngroups + 1)
+            result = self.re_pattern.Match(sp[0], <int>pos, anchoring, m.matches, self.ngroups + 1)
 
         del sp
         if result == 0:
             return None
-        m.matches = matches
         m.encoded = <bint>(encoded) or self.encoded
         m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
         m.nmatches = self.ngroups + 1
@@ -302,7 +301,6 @@ cdef class Pattern:
         cdef int result
         cdef char * cstring
         cdef _re2.StringPiece * sp
-        cdef _re2.StringPiece * matches
         cdef Match m
         cdef list resultlist = []
         cdef int encoded = 0
@@ -318,14 +316,12 @@ cdef class Pattern:
         sp = new _re2.StringPiece(cstring, size)
 
         while True:
+            m = Match(self.ngroups + 1)
             with nogil:
-                matches = _re2.new_StringPiece_array(self.ngroups + 1)
-                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
+                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
             if result == 0:
                 break
-            m = Match()
             m.encoded = encoded
-            m.matches = matches
             m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
@@ -339,7 +335,7 @@ cdef class Pattern:
             if pos == size:
                 break
             # offset the pos to move to the next point
-            pos = matches[0].data() - cstring + matches[0].length()
+            pos = m.matches[0].data() - cstring + m.matches[0].length()
         del sp
         return resultlist
 
@@ -498,7 +494,6 @@ cdef class Pattern:
         cdef int num_repl = 0
         cdef char * cstring
         cdef _re2.StringPiece * sp
-        cdef _re2.StringPiece * matches
         cdef Match m
         cdef list resultlist = []
 
@@ -513,23 +508,20 @@ cdef class Pattern:
         sp = new _re2.StringPiece(cstring, size)
 
         while True:
+            m = Match(self.ngroups + 1)
             with nogil:
-                matches = _re2.new_StringPiece_array(self.ngroups + 1)
-                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, matches, self.ngroups + 1)
+                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
             if result == 0:
-                _re2.delete_StringPiece_array(matches)
                 break
 
-            endpos = matches[0].data() - cstring
+            endpos = m.matches[0].data() - cstring
             if encoded:
                 resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
             else:
                 resultlist.append(sp.data()[pos:endpos])
-            pos = endpos + matches[0].length()
+            pos = endpos + m.matches[0].length()
 
-            m = Match()
             m.encoded = encoded
-            m.matches = matches
             m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
