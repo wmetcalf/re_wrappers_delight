@@ -502,8 +502,8 @@ cdef class Pattern:
         cdef Match m
         cdef list resultlist = []
 
-        if maxsplit < 0:
-            maxsplit = 0
+        if count < 0:
+            count = 0
 
         string = unicode_to_bytestring(string, &encoded)
         if pystring_to_bytestring(string, &cstring, &size) == -1:
