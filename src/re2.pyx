@@ -347,8 +347,8 @@ cdef class Pattern:
         Return all non-overlapping matches of pattern in string as a list
         of match objects.
         """
-        # FIXME should return an iterator according to spec
-        return self._finditer(string, pos, endpos, 0)
+        # TODO This builds a list and returns its iterator. Probably could be more memory efficient
+        return self._finditer(string, pos, endpos, 0).__iter__()
 
     def findall(self, object string, int pos=0, int endpos=-1):
         """
