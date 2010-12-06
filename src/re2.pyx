@@ -452,6 +452,7 @@ cdef class Pattern:
         """
         cdef Py_ssize_t size
         cdef char * cstring
+        cdef _re2.cpp_string * fixed_repl
         cdef _re2.StringPiece * sp
         cdef _re2.cpp_string * input_str
         cdef total_replacements = 0
@@ -469,7 +470,40 @@ cdef class Pattern:
             raise TypeError("expected string or buffer")
         encoded = <bint>string_encoded or <bint>repl_encoded
 
-        sp = new _re2.StringPiece(cstring, size)
+        fixed_repl = NULL
+        cdef _re2.const_char_ptr s = cstring
+        cdef _re2.const_char_ptr end = s + size
+        cdef int c = 0
+        while s < end:
+            c = s[0]
+            if (c == '\\'):
+                s += 1
+                if s == end:
+                    raise RegexError("Invalid rewrite pattern")
+                c = s[0]
+                if c == '\\' or (c >= '0' and c <= '9'):
+                    if fixed_repl != NULL:
+                        fixed_repl.push_back('\\')
+                        fixed_repl.push_back(c)
+                else:
+                    if fixed_repl == NULL:
+                        fixed_repl = new _re2.cpp_string(cstring, s - cstring - 1)
+                    if c == 'n':
+                        fixed_repl.push_back('\n')   
+                    else:
+                        fixed_repl.push_back('\\')
+                        fixed_repl.push_back('\\')
+                        fixed_repl.push_back(c)
+            else:
+                if fixed_repl != NULL:
+                    fixed_repl.push_back(c)
+
+            s += 1
+        if fixed_repl != NULL:
+            sp = new _re2.StringPiece(fixed_repl.c_str())
+        else:
+            sp = new _re2.StringPiece(cstring, size)
+        
         input_str = new _re2.cpp_string(string)
         if not count:
             total_replacements = _re2.pattern_GlobalReplace(input_str,
@@ -480,6 +514,7 @@ cdef class Pattern:
                                                       self.re_pattern[0],
                                                       sp[0])
         else:
+            del fixed_repl
             del input_str
             del sp
             raise NotImplementedError("So far pyre2 does not support custom replacement counts")
@@ -488,6 +523,7 @@ cdef class Pattern:
             result = cpp_to_utf8(input_str[0])
         else:
             result = cpp_to_pystring(input_str[0])
+        del fixed_repl
         del input_str
         del sp
         return (result, total_replacements)

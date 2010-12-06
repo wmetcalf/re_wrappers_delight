@@ -5,8 +5,10 @@ cdef extern from *:
 cdef extern from "<string>" namespace "std":
     cdef cppclass string:
         string(char *)
+        string(char *, size_t n)
         const_char_ptr c_str()
         int length()
+        void push_back(char c)
 
     ctypedef string cpp_string "std::string"
     ctypedef string const_string "std::string"
@@ -35,6 +37,7 @@ cdef extern from "Python.h":
 cdef extern from "re2/stringpiece.h" namespace "re2":
     cdef cppclass StringPiece:
         StringPiece()
+        StringPiece(const_char_ptr)
         StringPiece(const_char_ptr, int)
         const_char_ptr data()
         int copy(char * buf, size_t n, size_t pos)
