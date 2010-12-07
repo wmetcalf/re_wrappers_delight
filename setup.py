@@ -43,11 +43,20 @@ for re2_prefix in _re2_prefixes:
 else:
     raise OSError("Cannot find RE2 library. Please install it from http://code.google.com/p/re2/wiki/Install")
 
+BASE_DIR = os.path.dirname(__file__)
 
+def get_long_description():
+    readme_f = open(os.path.join(BASE_DIR, "README.rst"))
+    readme = readme_f.read()
+    readme_f.close()
+    
+    return readme
+    
 setup(
     name="re2",
     version="0.2.10",
     description="Python wrapper for Google's RE2 using Cython",
+    long_description=get_long_description(),
     author="Mike Axiak",
     license="New BSD License",
     author_email = "mike@axiak.net",

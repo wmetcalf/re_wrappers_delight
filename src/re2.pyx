@@ -2,6 +2,7 @@
 # Import re flags to be compatible.
 import sys
 import re
+
 I = re.I
 IGNORECASE = re.IGNORECASE
 M = re.M
@@ -674,8 +675,10 @@ def _compile(pattern, int flags=0):
         if current_notification == <int>FALLBACK_EXCEPTION:
             # Raise an exception regardless of the type of error.
             raise RegexError(error_msg)
-        elif error_code != _re2.ErrorBadPerlOp and error_code != _re2.ErrorRepeatSize:
-            # Raise an error because these will not be fixed by using the ``re`` module.
+        elif error_code not in (_re2.ErrorBadPerlOp, _re2.ErrorRepeatSize,
+                                _re2.ErrorBadEscape):
+            # Raise an error because these will not be fixed by using the 
+            # ``re`` module.
             raise RegexError(error_msg)
         elif current_notification == <int>FALLBACK_WARNING:
             warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
