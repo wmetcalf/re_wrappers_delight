@@ -13,7 +13,6 @@ U = re.U
 UNICODE = re.UNICODE
 X = re.X
 VERBOSE = re.VERBOSE
-escape = re.escape
 
 FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
@@ -755,3 +754,22 @@ def subn(pattern, repl, string, int count=0):
     return a replacement string to be used.
     """
     return compile(pattern).subn(repl, string, count)
+
+_alphanum = {}
+for c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890':
+    _alphanum[c] = 1
+del c
+
+def escape(pattern):
+    "Escape all non-alphanumeric characters in pattern."
+    s = list(pattern)
+    alphanum = _alphanum
+    for i in range(len(pattern)):
+        c = pattern[i]
+        if ord(c) < 0x80 and c not in alphanum:
+            if c == "\000":
+                s[i] = "\\000"
+            else:
+                s[i] = "\\" + c
+    return pattern[:0].join(s)
+
