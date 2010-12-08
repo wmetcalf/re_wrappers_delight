@@ -130,8 +130,10 @@ cdef class Match:
         self._lastindex = len(groups) - 1
         self._groups = tuple(groups)
 
-    def groups(self):
+    def groups(self, default=None):
         self.init_groups()
+        if default is not None:
+            return tuple([g or default for g in self._groups[1:]])
         return self._groups[1:]
 
     def group(self, *args):
@@ -381,7 +383,7 @@ cdef class Pattern:
             m.match_string = string
             if as_match:
                 if self.ngroups > 1:
-                    resultlist.append(m.groups())
+                    resultlist.append(m.groups(""))
                 else:
                     resultlist.append(m.group(self.ngroups))
             else:
