@@ -518,7 +518,6 @@ cdef class Pattern:
         repl = unicode_to_bytestring(repl, &repl_encoded)
         if pystring_to_bytestring(repl, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
-        encoded = <bint>string_encoded or <bint>repl_encoded
 
         fixed_repl = NULL
         cdef _re2.const_char_ptr s = cstring
@@ -569,7 +568,7 @@ cdef class Pattern:
             del sp
             raise NotImplementedError("So far pyre2 does not support custom replacement counts")
 
-        if encoded:
+        if string_encoded or (repl_encoded and total_replacements > 0):
             result = cpp_to_utf8(input_str[0])
         else:
             result = cpp_to_pystring(input_str[0])
