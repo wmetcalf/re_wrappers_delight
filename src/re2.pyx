@@ -605,13 +605,116 @@ def compile(pattern, int flags=0):
     _cache[cachekey] = p
     return p
 
-# Ironically, to find an odd number of backslashes in the pattern, we need backreferences
-# so we use the re module
-odd_number_of_backslashes = r'((?<!\\)(?:(\\*)\2))\\'
-re_backreferences = re.compile(odd_number_of_backslashes + r'\d')
-re_unicode_digit = re.compile(odd_number_of_backslashes + r'd')
-re_unicode_alphanum = re.compile(odd_number_of_backslashes + r'w')
-re_unicode_space = re.compile(odd_number_of_backslashes + r's')
+class BackreferencesException(Exception):
+    pass
+
+WHITESPACE = set(" \t\n\r\v\f")
+
+class Tokenizer:
+    def __init__(self, string):
+        self.string = string
+        self.index = 0
+        self.__next()
+    def __next(self):
+        if self.index >= len(self.string):
+            self.next = None
+            return
+        ch = self.string[self.index]
+        if ch[0] == "\\":
+            try:
+                c = self.string[self.index + 1]
+            except IndexError:
+                raise RegexError, "bogus escape (end of line)"
+            ch = ch + c
+        self.index = self.index + len(ch)
+        self.next = ch
+    def get(self):
+        this = self.next
+        self.__next()
+        return this
+
+def prepare_pattern(pattern, int flags):
+    source = Tokenizer(pattern)
+    new_pattern = []
+
+    cdef str strflags = ''
+    if flags & _S:
+        strflags += 's'
+    if flags & _M:
+        strflags += 'm'
+
+    if strflags:
+        new_pattern.append('(?' + strflags + ')')
+
+    while 1:
+        this = source.get()
+        if this is None:
+            break
+        if flags & _X:
+            if this in WHITESPACE:
+                continue
+            if this == "#":
+                while 1:
+                    this = source.get()
+                    if this in (None, "\n"):
+                        break
+                continue
+        
+        if this[0] not in '[\\':
+            new_pattern.append(this)
+            continue
+
+        elif this == '[':
+            new_pattern.append(this)    
+            while 1:
+                this = source.get()
+                if this is None:
+                    raise RegexError, "unexpected end of regular expression"
+                elif this == ']':
+                    new_pattern.append(this)
+                    break
+                elif this[0] == '\\':
+                    if flags & _U:
+                        if this[1] == 'd':
+                            new_pattern.append(r'\p{Nd}')
+                        elif this[1] == 'w':
+                            new_pattern.append(r'_\p{L}\p{Nd}')
+                        elif this[1] == 's':
+                            new_pattern.append(r'\s\p{Z}')
+                        else:   
+                            new_pattern.append(this)
+                    else:
+                        new_pattern.append(this)
+                else:
+                    new_pattern.append(this)
+        elif this[0] == '\\':
+            if this[1] in '89':
+                raise BackreferencesException()
+            elif this[1] in '1234567':
+                if source.next and source.next in '1234567':
+                    this += source.get()
+                    if source.next and source.next in '1234567':
+                        # all clear, this is an octal escape
+                        new_pattern.append(this)
+                    else:
+                        raise BackreferencesException()
+                else:
+                    raise BackreferencesException()
+            elif flags & _U:
+                if this[1] == 'd':
+                    new_pattern.append(r'\p{Nd}')
+                elif this[1] == 'w':
+                    new_pattern.append(r'[_\p{L}\p{Nd}]')
+                elif this[1] == 's':
+                    new_pattern.append(r'[\s\p{Z}]')
+                else:
+                    new_pattern.append(this)
+            else:
+                new_pattern.append(this)
+
+    return ''.join(new_pattern)
+
+    
 
 def _compile(pattern, int flags=0):
     """
@@ -627,34 +730,24 @@ def _compile(pattern, int flags=0):
     if isinstance(pattern, (Pattern, SREPattern)):
         return pattern
 
-    if re_backreferences.search(pattern):
-        return re.compile(pattern, flags)
-
     cdef object original_pattern = pattern
-
-    cdef str strflags = ''
+    try:
+        pattern = prepare_pattern(original_pattern, flags)
+    except BackreferencesException:
+        error_msg = "Backreferences not supported"
+        if current_notification == <int>FALLBACK_EXCEPTION:
+            # Raise an exception regardless of the type of error.
+            raise RegexError(error_msg)
+        elif current_notification == <int>FALLBACK_WARNING:
+            warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
+        return re.compile(original_pattern, flags)
+        
     # Set the options given the flags above.
     if flags & _I:
         opts.set_case_sensitive(0);
 
     opts.set_log_errors(0)
     opts.set_encoding(_re2.EncodingUTF8)
-    if flags & _U:
-        pattern = re_unicode_digit.sub(r'\1\\p{Nd}', pattern)
-        pattern = re_unicode_alphanum.sub(r'\1[_\\p{L}\\p{Nd}]', pattern)
-        pattern = re_unicode_space.sub(r'\1[\\s\\p{Z}]', pattern)
-
-    if flags & _X:
-        # TODO: support verbose patterns
-        return re.compile(original_pattern, flags)
-
-    if flags & _S:
-        strflags += 's'
-    if flags & _M:
-        strflags += 'm'
-
-    if strflags:
-        pattern = '(?' + strflags + ')' + pattern
 
     # We use this function to get the proper length of the string.
 

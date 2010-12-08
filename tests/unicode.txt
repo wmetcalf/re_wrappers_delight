@@ -39,4 +39,6 @@ Test unicode character groups
     u'\u0401'
     >>> re.search(r'\s', u'\u1680', re.UNICODE).group(0)
     u'\u1680'
+    >>> re.findall(r'[\s\d\w]', 'hey 123', re.UNICODE)
+    ['h', 'e', 'y', ' ', '1', '2', '3']
 
