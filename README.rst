@@ -70,8 +70,7 @@ Alternative to those, you can clone this repository and try installing it from t
     $ cd pyre2.git
     $ sudo python setup.py install
 
-If you want to make changes to the bindings, you must have Cython >=0.13, which
-is as yet unreleased but is available from the `Cython hg repository <http://hg.cython.org/cython-devel/>`_.
+If you want to make changes to the bindings, you must have Cython >=0.13.
 
 Unicode Support
 ===============
@@ -138,9 +137,6 @@ Missing Features
 Currently the features missing are:
 
 * If you use substitution methods without a callback, a non 0/1 maxsplit argument is not supported.
-* No compile cache.
-  (If you care enough about performance to use RE2,
-  you probably care enough to cache your own patterns.)
 
 
 Credits
