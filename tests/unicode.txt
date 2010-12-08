@@ -42,3 +42,10 @@ Test unicode character groups
     >>> re.findall(r'[\s\d\w]', 'hey 123', re.UNICODE)
     ['h', 'e', 'y', ' ', '1', '2', '3']
 
+Group positions need to be fixed with unicode
+
+    >>> re.search(r' (.)', u'\U0001d200xxx\u1234 x').span(1) 
+    (6, 7)
+    >>> re.search(r' (.)', u'\U0001d200xxx\u1234 x'.encode('utf-8')).span(1) 
+    (11, 12)
+

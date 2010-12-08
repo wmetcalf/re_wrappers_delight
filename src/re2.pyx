@@ -86,6 +86,9 @@ cdef inline int pystring_to_bytestring(object pystring, char ** cstring, Py_ssiz
     # a non-supported encoding.
     return _re2.PyObject_AsCharBuffer(pystring, <_re2.const_char_ptr*> cstring, length)
 
+cdef extern from *:
+    cdef void emit_ifndef_py_unicode_wide "#if !defined(Py_UNICODE_WIDE) //" ()
+    cdef void emit_endif "#endif //" ()
 
 cdef class Match:
     cdef _re2.StringPiece * matches
@@ -151,9 +154,52 @@ cdef class Match:
         if idx > self.nmatches - 1:
             raise IndexError("no such group")
         return self._groups[idx]
+    
+    cdef void _convert_span(self, int start, int end, int* out_start, int* out_end):
+        cdef char * s = self.match_string
+        cdef int cpos = 0
+        cdef int upos = 0
+        cdef int size = len(self.match_string)
+        cdef int c 
+        
+        out_start[0] = -1
+        out_end[0] = -1
+
+        if start == 0:
+            out_start[0] = 0
+        if end == 0:
+            out_end[0] = 0
+            return
+
+        while cpos < size:
+            c = <unsigned char>s[cpos]
+            if c < 0x80:
+                inc(cpos)
+                inc(upos)
+            elif c < 0xe0:
+                cpos += 2
+                inc(upos)
+            elif c < 0xf0:
+                cpos += 3
+                inc(upos)
+            else:
+                cpos += 4
+                inc(upos)
+                # wide unicode chars get 2 unichars when python is compiled with --enable-unicode=ucs2
+                # TODO: verify this
+                emit_ifndef_py_unicode_wide()
+                inc(upos)
+                emit_endif()
+
+            if start == cpos:
+                out_start[0] = upos
+            if end == cpos:
+                out_end[0] = upos
+                return
 
     cdef _makespan(self, int groupnum=0):
         cdef int start, end
+        cdef int ustart, uend
         cdef _re2.StringPiece * piece
         cdef char * s = self.match_string
         if groupnum > self.nmatches - 1:
@@ -163,7 +209,11 @@ cdef class Match:
             return (-1, -1)
         start = piece.data() - s
         end = start + piece.length()
-        return (start, end)
+        if self.encoded:
+            self._convert_span(start, end, &ustart, &uend)
+            return(ustart, uend)
+        else:
+            return (start, end)
 
     def expand(self, object template):
         # TODO - This can be optimized to work a bit faster in C.
