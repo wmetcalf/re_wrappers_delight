@@ -6,4 +6,6 @@ all:
 	python setup.py --cython build_ext --inplace
 
 test: all
-	(cd tests && python test.py)
+	cp -v re2.so tests
+	(cd tests && python re2_test.py)
+	(cd tests && python test_re.py)
