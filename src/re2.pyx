@@ -826,6 +826,8 @@ def _compile(pattern, int flags=0):
     cdef int encoded = 0
 
     if isinstance(pattern, (Pattern, SREPattern)):
+        if flags:
+            raise ValueError('Cannot process flags argument with a compiled pattern')
         return pattern
 
     cdef object original_pattern = pattern
