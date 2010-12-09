@@ -490,7 +490,10 @@ cdef class Pattern:
             if pos == size:
                 break
             # offset the pos to move to the next point
-            pos = m.matches[0].data() - cstring + m.matches[0].length()
+            if m.matches[0].length() == 0:
+                pos += 1
+            else:
+                pos = m.matches[0].data() - cstring + m.matches[0].length()
         del sp
         return resultlist
 
