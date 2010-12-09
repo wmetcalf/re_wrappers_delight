@@ -102,18 +102,41 @@ cdef class Match:
     cdef object _lastgroup
     cdef int _lastindex
     cdef int nmatches
+    cdef int _pos
+    cdef int _endpos
     cdef object match_string
+    cdef object _pattern_object
     cdef tuple _groups
     cdef dict _named_groups
 
-    def __init__(self, num_groups):
+    def __init__(self, object pattern_object, int num_groups):
         self._lastgroup = -1
         self._lastindex = -1
         self._groups = None
+        self._pos = 0
+        self._endpos = -1
         self.matches = _re2.new_StringPiece_array(num_groups + 1)
+        self.nmatches = num_groups
+        self._pattern_object = pattern_object
 
     def __dealloc__(self):
         _re2.delete_StringPiece_array(self.matches)
+
+    property re:
+        def __get__(self):
+            return self._pattern_object
+
+    property pos:
+        def __get__(self):
+            return self._pos
+
+    property endpos:
+        def __get__(self):
+            return self._endpos
+
+    property string:
+        def __get__(self):
+            return self.match_string
 
     cdef init_groups(self):
         cdef list groups = []
@@ -221,6 +244,13 @@ cdef class Match:
         else:
             return (start, end)
 
+    property regs:
+        def __get__(self):
+            l = []
+            for i in range(self.nmatches):
+                l.append(self._makespan(i))
+            return tuple(l)
+
     def expand(self, object template):
         # TODO - This can be optimized to work a bit faster in C.
         # Expand a template with groups
@@ -312,7 +342,7 @@ cdef class Pattern:
         cdef char * cstring
         cdef int encoded = 0
         cdef _re2.StringPiece * sp
-        cdef Match m = Match(self.ngroups + 1)
+        cdef Match m = Match(self, self.ngroups + 1)
 
         if hasattr(string, 'tostring'):
             string = string.tostring()
@@ -334,6 +364,11 @@ cdef class Pattern:
         m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
         m.nmatches = self.ngroups + 1
         m.match_string = string
+        m._pos = pos
+        if endpos == -1:
+            m._endpos = len(string)
+        else:
+            m._endpos = endpos
         return m
 
 
@@ -378,7 +413,7 @@ cdef class Pattern:
         sp = new _re2.StringPiece(cstring, size)
 
         while True:
-            m = Match(self.ngroups + 1)
+            m = Match(self, self.ngroups + 1)
             with nogil:
                 result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
             if result == 0:
@@ -387,6 +422,11 @@ cdef class Pattern:
             m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
+            m._pos = pos
+            if endpos == -1:
+                m._endpos = len(string)
+            else:
+                m._endpos = endpos
             if as_match:
                 if self.ngroups > 1:
                     resultlist.append(m.groups(""))
@@ -612,7 +652,7 @@ cdef class Pattern:
         sp = new _re2.StringPiece(cstring, size)
 
         while True:
-            m = Match(self.ngroups + 1)
+            m = Match(self, self.ngroups + 1)
             with nogil:
                 result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
             if result == 0:
