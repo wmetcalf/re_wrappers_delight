@@ -372,7 +372,7 @@ cdef class Pattern:
     cdef bint encoded
     cdef int _flags
     cdef public object pattern
-
+    cdef object __weakref__
 
     property flags:
         def __get__(self):
