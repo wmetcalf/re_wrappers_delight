@@ -99,7 +99,6 @@ cdef class Match:
     cdef _re2.const_stringintmap * named_groups
 
     cdef bint encoded
-    cdef object _lastgroup
     cdef int _lastindex
     cdef int nmatches
     cdef int _pos
@@ -110,7 +109,6 @@ cdef class Match:
     cdef dict _named_groups
 
     def __init__(self, object pattern_object, int num_groups):
-        self._lastgroup = -1
         self._lastindex = -1
         self._groups = None
         self._pos = 0
@@ -146,11 +144,27 @@ cdef class Match:
         if self._groups is not None:
             return
 
+        cdef _re2.const_char_ptr last_end = NULL
+        cdef _re2.const_char_ptr cur_end = NULL
+
         for i in range(self.nmatches):
             if self.matches[i].data() == NULL:
                 groups.append(None)
             else:
-                self._lastindex = i
+                if i > 0:
+                    cur_end = self.matches[i].data() + self.matches[i].length()
+
+                    if last_end == NULL:
+                        last_end = cur_end
+                        self._lastindex = i
+                    else:
+                        # The rules for last group are a bit complicated:
+                        # if two groups end at the same point, the earlier one is considered last
+                        # so we don't switch our selection unless the end point has moved
+                        if cur_end > last_end:
+                            last_end = cur_end
+                            self._lastindex = i
+
                 if cur_encoded:
                     groups.append(char_to_utf8(self.matches[i].data(), self.matches[i].length()))
                 else:
@@ -282,10 +296,8 @@ cdef class Match:
 
         self._named_groups = result
         it = self.named_groups.begin()
-        self._lastgroup = None
         while it != self.named_groups.end():
             result[cpp_to_pystring(deref(it).first)] = self._groups[deref(it).second]
-            self._lastgroup = cpp_to_pystring(deref(it).first)
             inc(it)
 
         return result
@@ -309,9 +321,19 @@ cdef class Match:
 
     property lastgroup:
         def __get__(self):
-            if self._lastgroup == -1:
-                self.groupdict()
-            return self._lastgroup
+            self.init_groups()
+            cdef _re2.stringintmapiterator it
+
+            if self._lastindex < 1:
+                return None
+            
+            it = self.named_groups.begin()
+            while it != self.named_groups.end():
+                if deref(it).second == self._lastindex:
+                    return cpp_to_pystring(deref(it).first)
+                inc(it)
+            
+            return None
 
 
 cdef class Pattern:

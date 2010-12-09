@@ -1,4 +1,3 @@
-
 cdef extern from *:
     ctypedef char* const_char_ptr "const char*"
 
@@ -11,7 +10,7 @@ cdef extern from "<string>" namespace "std":
         void push_back(char c)
 
     ctypedef string cpp_string "std::string"
-    ctypedef string const_string "std::string"
+    ctypedef string const_string "const std::string"
 
 
 
