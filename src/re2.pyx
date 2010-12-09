@@ -518,13 +518,13 @@ cdef class Pattern:
                         else:
                             resultlist.append(matches[group + 1].data()[:matches[group + 1].length()])
 
-            num_split += 1
-            if maxsplit and num_split >= maxsplit:
-                break
-
             # offset the pos to move to the next point
             pos = match_end
             lookahead = 0
+
+            num_split += 1
+            if maxsplit and num_split >= maxsplit:
+                break
 
         if encoded:
             resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
