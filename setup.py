@@ -59,8 +59,6 @@ def get_authors():
     authors_f.close()
     return ', '.join(authors)
 
-get_authors()    
-
 setup(
     name="re2",
     version="0.2.11",
