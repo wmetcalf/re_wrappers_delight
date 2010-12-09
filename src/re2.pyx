@@ -13,6 +13,8 @@ U = re.U
 UNICODE = re.UNICODE
 X = re.X
 VERBOSE = re.VERBOSE
+L = re.L
+LOCALE = re.LOCALE
 
 FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
@@ -46,7 +48,9 @@ class RegexError(re.error):
     """
     pass
 
-cdef int _I = I, _M = M, _S = S, _U = U, _X = X
+error = RegexError
+
+cdef int _I = I, _M = M, _S = S, _U = U, _X = X, _L = L
 
 cimport _re2
 cimport python_unicode
@@ -310,6 +314,8 @@ cdef class Pattern:
         cdef _re2.StringPiece * sp
         cdef Match m = Match(self.ngroups + 1)
 
+        if hasattr(string, 'tostring'):
+            string = string.tostring()
         string = unicode_to_bytestring(string, &encoded)
         if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
