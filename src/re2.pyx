@@ -106,7 +106,9 @@ cdef class Match:
     cdef object match_string
     cdef object _pattern_object
     cdef tuple _groups
+    cdef tuple _spans
     cdef dict _named_groups
+    cdef dict _named_indexes
 
     def __init__(self, object pattern_object, int num_groups):
         self._lastindex = -1
@@ -198,21 +200,21 @@ cdef class Match:
             raise IndexError("no such group")
         return self._groups[idx]
     
-    cdef void _convert_span(self, int start, int end, int* out_start, int* out_end):
+    cdef object _convert_positions(self, positions):
         cdef char * s = self.match_string
         cdef int cpos = 0
         cdef int upos = 0
         cdef int size = len(self.match_string)
         cdef int c 
         
-        out_start[0] = -1
-        out_end[0] = -1
-
-        if start == 0:
-            out_start[0] = 0
-        if end == 0:
-            out_end[0] = 0
-            return
+        new_positions = []
+        i = 0
+        num_positions = len(positions)
+        if positions[i] == 0:
+            new_positions.append(0)
+            inc(i)
+            if i == num_positions:
+                return new_positions
 
         while cpos < size:
             c = <unsigned char>s[cpos]
@@ -234,36 +236,50 @@ cdef class Match:
                 inc(upos)
                 emit_endif()
 
-            if start == cpos:
-                out_start[0] = upos
-            if end == cpos:
-                out_end[0] = upos
-                return
+            if positions[i] == cpos:
+                new_positions.append(upos)
+                inc(i)
+                if i == num_positions:
+                    return new_positions
 
-    cdef _makespan(self, int groupnum=0):
+    def _convert_spans(self, spans):
+        positions = [x for x,y in spans] + [y for x,y in spans]
+        positions = sorted(set(positions))
+        posdict = dict(zip(positions, self._convert_positions(positions)))
+
+        return [(posdict[x], posdict[y]) for x,y in spans]
+        
+
+    cdef _make_spans(self):
+        if self._spans is not None:
+            return
+
         cdef int start, end
-        cdef int ustart, uend
-        cdef _re2.StringPiece * piece
         cdef char * s = self.match_string
-        if groupnum > self.nmatches - 1:
-            raise IndexError("no such group")
-        piece = &self.matches[groupnum]
-        if piece.data() == NULL:
-            return (-1, -1)
-        start = piece.data() - s
-        end = start + piece.length()
+        cdef _re2.StringPiece * piece
+
+        spans = []
+        for i in range(self.nmatches):
+            if self.matches[i].data() == NULL:
+                spans.append((-1, -1))
+            else:
+                piece = &self.matches[i]
+                if piece.data() == NULL:
+                    return (-1, -1)
+                start = piece.data() - s
+                end = start + piece.length()
+                spans.append((start, end))
+        
         if self.encoded:
-            self._convert_span(start, end, &ustart, &uend)
-            return(ustart, uend)
-        else:
-            return (start, end)
+            spans = self._convert_spans(spans)
+
+        self._spans = tuple(spans)
 
     property regs:
         def __get__(self):
-            l = []
-            for i in range(self.nmatches):
-                l.append(self._makespan(i))
-            return tuple(l)
+            if self._spans is None:
+                self._make_spans()
+            return self._spans
 
     def expand(self, object template):
         # TODO - This can be optimized to work a bit faster in C.
@@ -288,6 +304,7 @@ cdef class Match:
     def groupdict(self):
         cdef _re2.stringintmapiterator it
         cdef dict result = {}
+        cdef dict indexes = {}
 
         self.init_groups()
 
@@ -297,19 +314,32 @@ cdef class Match:
         self._named_groups = result
         it = self.named_groups.begin()
         while it != self.named_groups.end():
+            indexes[cpp_to_pystring(deref(it).first)] = deref(it).second
             result[cpp_to_pystring(deref(it).first)] = self._groups[deref(it).second]
             inc(it)
 
+        self._named_groups = result
+        self._named_indexes = indexes
         return result
 
-    def end(self, int groupnum=0):
-        return self._makespan(groupnum)[1]
+    def end(self, group=0):
+        return self.span(group)[1]
 
-    def start(self, int groupnum=0):
-        return self._makespan(groupnum)[0]
+    def start(self, group=0):
+        return self.span(group)[0]
 
-    def span(self, int groupnum=0):
-        return self._makespan(groupnum)
+    def span(self, group=0):
+        self._make_spans()
+        if type(group) is int:
+            if group > len(self._spans):
+                raise IndexError("no such group")
+            return self._spans[group]
+        else:
+            self.groupdict()
+            if group not in self._named_indexes:
+                raise IndexError("no such group")
+            return self._spans[self._named_indexes[group]]
+
 
     property lastindex:
         def __get__(self):
