@@ -20,8 +20,8 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
-VERSION = (0, 2, 10)
-VERSION_HEX = 0x00020A
+VERSION = (0, 2, 11)
+VERSION_HEX = 0x00020B
 
 # Type of compiled re object from Python stdlib
 SREPattern = type(re.compile(''))
