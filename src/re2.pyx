@@ -150,11 +150,11 @@ cdef class Match:
             if self.matches[i].data() == NULL:
                 groups.append(None)
             else:
+                self._lastindex = i
                 if cur_encoded:
                     groups.append(char_to_utf8(self.matches[i].data(), self.matches[i].length()))
                 else:
                     groups.append(self.matches[i].data()[:self.matches[i].length()])
-        self._lastindex = len(groups) - 1
         self._groups = tuple(groups)
 
     def groups(self, default=None):
@@ -301,6 +301,7 @@ cdef class Match:
 
     property lastindex:
         def __get__(self):
+            self.init_groups()
             if self._lastindex < 1:
                 return None
             else:
