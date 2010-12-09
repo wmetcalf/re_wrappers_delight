@@ -651,39 +651,39 @@ cdef class Pattern:
 
         sp = new _re2.StringPiece(cstring, size)
 
-        while True:
-            m = Match(self, self.ngroups + 1)
-            with nogil:
-                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
-            if result == 0:
-                break
+        try:
+            while True:
+                m = Match(self, self.ngroups + 1)
+                with nogil:
+                    result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
+                if result == 0:
+                    break
 
-            endpos = m.matches[0].data() - cstring
+                endpos = m.matches[0].data() - cstring
+                if encoded:
+                    resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
+                else:
+                    resultlist.append(sp.data()[pos:endpos])
+                pos = endpos + m.matches[0].length()
+
+                m.encoded = encoded
+                m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
+                m.nmatches = self.ngroups + 1
+                m.match_string = string
+                resultlist.append(callback(m) or '')
+
+                num_repl += 1
+                if count and num_repl >= count:
+                    break
+
             if encoded:
-                resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
+                resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
+                return (u''.join(resultlist), num_repl)
             else:
-                resultlist.append(sp.data()[pos:endpos])
-            pos = endpos + m.matches[0].length()
-
-            m.encoded = encoded
-            m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
-            m.nmatches = self.ngroups + 1
-            m.match_string = string
-            resultlist.append(callback(m) or '')
-
-            num_repl += 1
-            if count and num_repl >= count:
-                break
-
-        if encoded:
-            resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
-        else:
-            resultlist.append(sp.data()[pos:])
-        del sp
-        if encoded:
-            return (u''.join(resultlist), num_repl)
-        else:
-            return (''.join(resultlist), num_repl)
+                resultlist.append(sp.data()[pos:])
+                return (''.join(resultlist), num_repl)
+        finally:
+            del sp
 
 _cache = {}
 _cache_repl = {}
