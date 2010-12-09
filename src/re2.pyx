@@ -210,6 +210,11 @@ cdef class Match:
         new_positions = []
         i = 0
         num_positions = len(positions)
+        if positions[i] == -1:
+            new_positions.append(-1)
+            inc(i)
+            if i == num_positions:
+                return new_positions
         if positions[i] == 0:
             new_positions.append(0)
             inc(i)
