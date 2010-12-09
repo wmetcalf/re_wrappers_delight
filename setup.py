@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import os
+import re
 from distutils.core import setup, Extension, Command
 
 class TestCommand(Command):
@@ -49,15 +50,23 @@ def get_long_description():
     readme_f = open(os.path.join(BASE_DIR, "README.rst"))
     readme = readme_f.read()
     readme_f.close()
-    
     return readme
-    
+
+def get_authors():
+    author_re = re.compile(r'^\s*(.*?)\s+<.*?\@.*?>', re.M)
+    authors_f = open(os.path.join(BASE_DIR, "AUTHORS"))
+    authors = [match.group(1) for match in author_re.finditer(authors_f.read())]
+    authors_f.close()
+    return ', '.join(authors)
+
+get_authors()    
+
 setup(
     name="re2",
     version="0.2.10",
     description="Python wrapper for Google's RE2 using Cython",
     long_description=get_long_description(),
-    author="Mike Axiak",
+    author=get_authors(),
     license="New BSD License",
     author_email = "mike@axiak.net",
     url = "http://github.com/axiak/pyre2/",
