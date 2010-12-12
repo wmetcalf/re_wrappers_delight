@@ -53,7 +53,7 @@ error = RegexError
 cdef int _I = I, _M = M, _S = S, _U = U, _X = X, _L = L
 
 cimport _re2
-cimport python_unicode
+cimport cpython.unicode
 from cython.operator cimport preincrement as inc, dereference as deref
 import warnings
 
@@ -65,17 +65,17 @@ cdef object cpp_to_pystring(_re2.cpp_string input):
 
 cdef inline object cpp_to_utf8(_re2.cpp_string input):
     # This function converts a std::string object to a utf8 object.
-    return python_unicode.PyUnicode_DecodeUTF8(input.c_str(), input.length(), 'strict')
+    return cpython.unicode.PyUnicode_DecodeUTF8(input.c_str(), input.length(), 'strict')
 
 cdef inline object char_to_utf8(_re2.const_char_ptr input, int length):
     # This function converts a C string to a utf8 object.
-    return python_unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
+    return cpython.unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
 
 cdef inline object unicode_to_bytestring(object pystring, int * encoded):
     # This function will convert a utf8 string to a bytestring object.
-    if python_unicode.PyUnicode_Check(pystring):
-        pystring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AS_UNICODE(pystring),
-                                                       python_unicode.PyUnicode_GET_SIZE(pystring),
+    if cpython.unicode.PyUnicode_Check(pystring):
+        pystring = cpython.unicode.PyUnicode_EncodeUTF8(cpython.unicode.PyUnicode_AS_UNICODE(pystring),
+                                                       cpython.unicode.PyUnicode_GET_SIZE(pystring),
                                                        "strict")
         encoded[0] = 1
     else:
