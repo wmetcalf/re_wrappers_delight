@@ -26,7 +26,7 @@ VERSION_HEX = 0x00020B
 # Type of compiled re object from Python stdlib
 SREPattern = type(re.compile(''))
 
-cdef int current_notification = FALLBACK_WARNING
+cdef int current_notification = FALLBACK_QUIETLY
 
 def set_fallback_notification(level):
     """
