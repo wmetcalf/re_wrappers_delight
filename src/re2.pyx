@@ -20,8 +20,8 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
-VERSION = (0, 2, 11)
-VERSION_HEX = 0x00020B
+VERSION = (0, 2, 13)
+VERSION_HEX = 0x00020D
 
 # Type of compiled re object from Python stdlib
 SREPattern = type(re.compile(''))
@@ -650,12 +650,12 @@ _cache_repl = {}
 
 _MAXCACHE = 100
 
-def compile(pattern, int flags=0):
+def compile(pattern, int flags=0, int max_mem=8388608):
     cachekey = (type(pattern),) + (pattern, flags)
     p = _cache.get(cachekey)
     if p is not None:
         return p
-    p = _compile(pattern, flags)
+    p = _compile(pattern, flags, max_mem)
 
     if len(_cache) >= _MAXCACHE:
         _cache.clear()
@@ -773,7 +773,7 @@ def prepare_pattern(pattern, int flags):
 
     
 
-def _compile(pattern, int flags=0):
+def _compile(pattern, int flags=0, int max_mem=8388608):
     """
     Compile a regular expression pattern, returning a pattern object.
     """
@@ -803,6 +803,7 @@ def _compile(pattern, int flags=0):
     if flags & _I:
         opts.set_case_sensitive(0);
 
+    opts.set_max_mem(max_mem)
     opts.set_log_errors(0)
     opts.set_encoding(_re2.EncodingUTF8)
 
