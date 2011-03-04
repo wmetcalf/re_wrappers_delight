@@ -49,3 +49,8 @@ Group positions need to be fixed with unicode
     >>> re.search(r' (.)', u'\U0001d200xxx\u1234 x'.encode('utf-8')).span(1) 
     (11, 12)
 
+Pos and endpos also need to be corrected
+
+    >>> re.compile(r'x').findall(u'\u1234x', 1, 2)
+    [u'x']
+

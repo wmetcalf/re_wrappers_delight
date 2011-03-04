@@ -47,6 +47,18 @@ And in the above example, ``set_fallback_notification`` can handle 3 values:
 ``re.FALLBACK_QUIETLY`` (default), ``re.FALLBACK_WARNING`` (raises a warning), and
 ``re.FALLBACK_EXCEPTION`` (which raises an exception).
 
+**Note**: The re2 module treats byte strings as UTF-8. This is fully backwards compatible with 7-bit ascii.
+However, bytes containing values larger than 0x7f are going to be treated very differently in re2 than in re.
+The RE library quietly ignores invalid utf8 in input strings, and throws an exception on invalid utf8 in patterns.
+For example:
+
+    >>> re.findall(r'.', '\x80\x81\x82')
+    ['\x80', '\x81', '\x82']
+    >>> re2.findall(r'.', '\x80\x81\x82')
+    []
+
+If you require the use of regular expressions over an arbitrary stream of bytes, then this library might not be for you.
+
 Installation
 ============
 
