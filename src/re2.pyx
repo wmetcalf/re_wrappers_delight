@@ -26,7 +26,7 @@ VERSION_HEX = 0x00020D
 # Type of compiled re object from Python stdlib
 SREPattern = type(re.compile(''))
 
-cdef int current_notification = FALLBACK_WARNING
+cdef int current_notification = FALLBACK_QUIETLY
 
 def set_fallback_notification(level):
     """
@@ -53,7 +53,7 @@ error = RegexError
 cdef int _I = I, _M = M, _S = S, _U = U, _X = X, _L = L
 
 cimport _re2
-cimport python_unicode
+cimport cpython.unicode
 from cython.operator cimport preincrement as inc, dereference as deref
 import warnings
 
@@ -65,17 +65,17 @@ cdef object cpp_to_pystring(_re2.cpp_string input):
 
 cdef inline object cpp_to_utf8(_re2.cpp_string input):
     # This function converts a std::string object to a utf8 object.
-    return python_unicode.PyUnicode_DecodeUTF8(input.c_str(), input.length(), 'strict')
+    return cpython.unicode.PyUnicode_DecodeUTF8(input.c_str(), input.length(), 'strict')
 
 cdef inline object char_to_utf8(_re2.const_char_ptr input, int length):
     # This function converts a C string to a utf8 object.
-    return python_unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
+    return cpython.unicode.PyUnicode_DecodeUTF8(input, length, 'strict')
 
 cdef inline object unicode_to_bytestring(object pystring, int * encoded):
     # This function will convert a utf8 string to a bytestring object.
-    if python_unicode.PyUnicode_Check(pystring):
-        pystring = python_unicode.PyUnicode_EncodeUTF8(python_unicode.PyUnicode_AS_UNICODE(pystring),
-                                                       python_unicode.PyUnicode_GET_SIZE(pystring),
+    if cpython.unicode.PyUnicode_Check(pystring):
+        pystring = cpython.unicode.PyUnicode_EncodeUTF8(cpython.unicode.PyUnicode_AS_UNICODE(pystring),
+                                                       cpython.unicode.PyUnicode_GET_SIZE(pystring),
                                                        "strict")
         encoded[0] = 1
     else:
@@ -99,21 +99,44 @@ cdef class Match:
     cdef _re2.const_stringintmap * named_groups
 
     cdef bint encoded
-    cdef object _lastgroup
     cdef int _lastindex
     cdef int nmatches
+    cdef int _pos
+    cdef int _endpos
     cdef object match_string
+    cdef object _pattern_object
     cdef tuple _groups
+    cdef tuple _spans
     cdef dict _named_groups
+    cdef dict _named_indexes
 
-    def __init__(self, num_groups):
-        self._lastgroup = -1
+    def __init__(self, object pattern_object, int num_groups):
         self._lastindex = -1
         self._groups = None
+        self._pos = 0
+        self._endpos = -1
         self.matches = _re2.new_StringPiece_array(num_groups + 1)
+        self.nmatches = num_groups
+        self._pattern_object = pattern_object
 
     def __dealloc__(self):
         _re2.delete_StringPiece_array(self.matches)
+
+    property re:
+        def __get__(self):
+            return self._pattern_object
+
+    property pos:
+        def __get__(self):
+            return self._pos
+
+    property endpos:
+        def __get__(self):
+            return self._endpos
+
+    property string:
+        def __get__(self):
+            return self.match_string
 
     cdef init_groups(self):
         cdef list groups = []
@@ -123,15 +146,31 @@ cdef class Match:
         if self._groups is not None:
             return
 
+        cdef _re2.const_char_ptr last_end = NULL
+        cdef _re2.const_char_ptr cur_end = NULL
+
         for i in range(self.nmatches):
             if self.matches[i].data() == NULL:
                 groups.append(None)
             else:
+                if i > 0:
+                    cur_end = self.matches[i].data() + self.matches[i].length()
+
+                    if last_end == NULL:
+                        last_end = cur_end
+                        self._lastindex = i
+                    else:
+                        # The rules for last group are a bit complicated:
+                        # if two groups end at the same point, the earlier one is considered last
+                        # so we don't switch our selection unless the end point has moved
+                        if cur_end > last_end:
+                            last_end = cur_end
+                            self._lastindex = i
+
                 if cur_encoded:
                     groups.append(char_to_utf8(self.matches[i].data(), self.matches[i].length()))
                 else:
                     groups.append(self.matches[i].data()[:self.matches[i].length()])
-        self._lastindex = len(groups) - 1
         self._groups = tuple(groups)
 
     def groups(self, default=None):
@@ -161,21 +200,26 @@ cdef class Match:
             raise IndexError("no such group")
         return self._groups[idx]
     
-    cdef void _convert_span(self, int start, int end, int* out_start, int* out_end):
+    cdef object _convert_positions(self, positions):
         cdef char * s = self.match_string
         cdef int cpos = 0
         cdef int upos = 0
         cdef int size = len(self.match_string)
         cdef int c 
         
-        out_start[0] = -1
-        out_end[0] = -1
-
-        if start == 0:
-            out_start[0] = 0
-        if end == 0:
-            out_end[0] = 0
-            return
+        new_positions = []
+        i = 0
+        num_positions = len(positions)
+        if positions[i] == -1:
+            new_positions.append(-1)
+            inc(i)
+            if i == num_positions:
+                return new_positions
+        if positions[i] == 0:
+            new_positions.append(0)
+            inc(i)
+            if i == num_positions:
+                return new_positions
 
         while cpos < size:
             c = <unsigned char>s[cpos]
@@ -197,29 +241,50 @@ cdef class Match:
                 inc(upos)
                 emit_endif()
 
-            if start == cpos:
-                out_start[0] = upos
-            if end == cpos:
-                out_end[0] = upos
-                return
+            if positions[i] == cpos:
+                new_positions.append(upos)
+                inc(i)
+                if i == num_positions:
+                    return new_positions
 
-    cdef _makespan(self, int groupnum=0):
+    def _convert_spans(self, spans):
+        positions = [x for x,y in spans] + [y for x,y in spans]
+        positions = sorted(set(positions))
+        posdict = dict(zip(positions, self._convert_positions(positions)))
+
+        return [(posdict[x], posdict[y]) for x,y in spans]
+        
+
+    cdef _make_spans(self):
+        if self._spans is not None:
+            return
+
         cdef int start, end
-        cdef int ustart, uend
-        cdef _re2.StringPiece * piece
         cdef char * s = self.match_string
-        if groupnum > self.nmatches - 1:
-            raise IndexError("no such group")
-        piece = &self.matches[groupnum]
-        if piece.data() == NULL:
-            return (-1, -1)
-        start = piece.data() - s
-        end = start + piece.length()
+        cdef _re2.StringPiece * piece
+
+        spans = []
+        for i in range(self.nmatches):
+            if self.matches[i].data() == NULL:
+                spans.append((-1, -1))
+            else:
+                piece = &self.matches[i]
+                if piece.data() == NULL:
+                    return (-1, -1)
+                start = piece.data() - s
+                end = start + piece.length()
+                spans.append((start, end))
+        
         if self.encoded:
-            self._convert_span(start, end, &ustart, &uend)
-            return(ustart, uend)
-        else:
-            return (start, end)
+            spans = self._convert_spans(spans)
+
+        self._spans = tuple(spans)
+
+    property regs:
+        def __get__(self):
+            if self._spans is None:
+                self._make_spans()
+            return self._spans
 
     def expand(self, object template):
         # TODO - This can be optimized to work a bit faster in C.
@@ -244,6 +309,7 @@ cdef class Match:
     def groupdict(self):
         cdef _re2.stringintmapiterator it
         cdef dict result = {}
+        cdef dict indexes = {}
 
         self.init_groups()
 
@@ -252,25 +318,37 @@ cdef class Match:
 
         self._named_groups = result
         it = self.named_groups.begin()
-        self._lastgroup = None
         while it != self.named_groups.end():
+            indexes[cpp_to_pystring(deref(it).first)] = deref(it).second
             result[cpp_to_pystring(deref(it).first)] = self._groups[deref(it).second]
-            self._lastgroup = cpp_to_pystring(deref(it).first)
             inc(it)
 
+        self._named_groups = result
+        self._named_indexes = indexes
         return result
 
-    def end(self, int groupnum=0):
-        return self._makespan(groupnum)[1]
+    def end(self, group=0):
+        return self.span(group)[1]
 
-    def start(self, int groupnum=0):
-        return self._makespan(groupnum)[0]
+    def start(self, group=0):
+        return self.span(group)[0]
 
-    def span(self, int groupnum=0):
-        return self._makespan(groupnum)
+    def span(self, group=0):
+        self._make_spans()
+        if type(group) is int:
+            if group > len(self._spans):
+                raise IndexError("no such group")
+            return self._spans[group]
+        else:
+            self.groupdict()
+            if group not in self._named_indexes:
+                raise IndexError("no such group")
+            return self._spans[self._named_indexes[group]]
+
 
     property lastindex:
         def __get__(self):
+            self.init_groups()
             if self._lastindex < 1:
                 return None
             else:
@@ -278,9 +356,19 @@ cdef class Match:
 
     property lastgroup:
         def __get__(self):
-            if self._lastgroup == -1:
-                self.groupdict()
-            return self._lastgroup
+            self.init_groups()
+            cdef _re2.stringintmapiterator it
+
+            if self._lastindex < 1:
+                return None
+            
+            it = self.named_groups.begin()
+            while it != self.named_groups.end():
+                if deref(it).second == self._lastindex:
+                    return cpp_to_pystring(deref(it).first)
+                inc(it)
+            
+            return None
 
 
 cdef class Pattern:
@@ -289,7 +377,7 @@ cdef class Pattern:
     cdef bint encoded
     cdef int _flags
     cdef public object pattern
-
+    cdef object __weakref__
 
     property flags:
         def __get__(self):
@@ -312,7 +400,7 @@ cdef class Pattern:
         cdef char * cstring
         cdef int encoded = 0
         cdef _re2.StringPiece * sp
-        cdef Match m = Match(self.ngroups + 1)
+        cdef Match m = Match(self, self.ngroups + 1)
 
         if hasattr(string, 'tostring'):
             string = string.tostring()
@@ -334,6 +422,11 @@ cdef class Pattern:
         m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
         m.nmatches = self.ngroups + 1
         m.match_string = string
+        m._pos = pos
+        if endpos == -1:
+            m._endpos = len(string)
+        else:
+            m._endpos = endpos
         return m
 
 
@@ -378,7 +471,7 @@ cdef class Pattern:
         sp = new _re2.StringPiece(cstring, size)
 
         while True:
-            m = Match(self.ngroups + 1)
+            m = Match(self, self.ngroups + 1)
             with nogil:
                 result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
             if result == 0:
@@ -387,6 +480,11 @@ cdef class Pattern:
             m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
             m.nmatches = self.ngroups + 1
             m.match_string = string
+            m._pos = pos
+            if endpos == -1:
+                m._endpos = len(string)
+            else:
+                m._endpos = endpos
             if as_match:
                 if self.ngroups > 1:
                     resultlist.append(m.groups(""))
@@ -397,7 +495,10 @@ cdef class Pattern:
             if pos == size:
                 break
             # offset the pos to move to the next point
-            pos = m.matches[0].data() - cstring + m.matches[0].length()
+            if m.matches[0].length() == 0:
+                pos += 1
+            else:
+                pos = m.matches[0].data() - cstring + m.matches[0].length()
         del sp
         return resultlist
 
@@ -477,13 +578,13 @@ cdef class Pattern:
                         else:
                             resultlist.append(matches[group + 1].data()[:matches[group + 1].length()])
 
-            num_split += 1
-            if maxsplit and num_split >= maxsplit:
-                break
-
             # offset the pos to move to the next point
             pos = match_end
             lookahead = 0
+
+            num_split += 1
+            if maxsplit and num_split >= maxsplit:
+                break
 
         if encoded:
             resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
@@ -611,39 +712,39 @@ cdef class Pattern:
 
         sp = new _re2.StringPiece(cstring, size)
 
-        while True:
-            m = Match(self.ngroups + 1)
-            with nogil:
-                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
-            if result == 0:
-                break
+        try:
+            while True:
+                m = Match(self, self.ngroups + 1)
+                with nogil:
+                    result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
+                if result == 0:
+                    break
 
-            endpos = m.matches[0].data() - cstring
+                endpos = m.matches[0].data() - cstring
+                if encoded:
+                    resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
+                else:
+                    resultlist.append(sp.data()[pos:endpos])
+                pos = endpos + m.matches[0].length()
+
+                m.encoded = encoded
+                m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
+                m.nmatches = self.ngroups + 1
+                m.match_string = string
+                resultlist.append(callback(m) or '')
+
+                num_repl += 1
+                if count and num_repl >= count:
+                    break
+
             if encoded:
-                resultlist.append(char_to_utf8(&sp.data()[pos], endpos - pos))
+                resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
+                return (u''.join(resultlist), num_repl)
             else:
-                resultlist.append(sp.data()[pos:endpos])
-            pos = endpos + m.matches[0].length()
-
-            m.encoded = encoded
-            m.named_groups = _re2.addressof(self.re_pattern.NamedCapturingGroups())
-            m.nmatches = self.ngroups + 1
-            m.match_string = string
-            resultlist.append(callback(m) or '')
-
-            num_repl += 1
-            if count and num_repl >= count:
-                break
-
-        if encoded:
-            resultlist.append(char_to_utf8(&sp.data()[pos], sp.length() - pos))
-        else:
-            resultlist.append(sp.data()[pos:])
-        del sp
-        if encoded:
-            return (u''.join(resultlist), num_repl)
-        else:
-            return (''.join(resultlist), num_repl)
+                resultlist.append(sp.data()[pos:])
+                return (''.join(resultlist), num_repl)
+        finally:
+            del sp
 
 _cache = {}
 _cache_repl = {}
@@ -785,6 +886,8 @@ def _compile(pattern, int flags=0, int max_mem=8388608):
     cdef int encoded = 0
 
     if isinstance(pattern, (Pattern, SREPattern)):
+        if flags:
+            raise ValueError('Cannot process flags argument with a compiled pattern')
         return pattern
 
     cdef object original_pattern = pattern

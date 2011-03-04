@@ -15,3 +15,8 @@ These are simple tests of the ``search`` function
     >>> re.search(r'\n#hdr-editions(.*?)\n', open("cnn_homepage.dat").read()).groups()
     (' a { text-decoration:none; }',)
 
+Verify some sanity checks
+
+    >>> re.compile(r'x').search('x', 2000)
+    >>> re.compile(r'x').search('x', 1, -300)
+
