@@ -1,3 +1,6 @@
+0.2.12)
+    - Fixed pyre2 to work with latest version of re2 (axiak) (issue #3)
+
 0.2.10) 2010-12-08
     - Added .flags to pattern to make that transparent (axiak)
     - Added Python re unit tests (itsadok)

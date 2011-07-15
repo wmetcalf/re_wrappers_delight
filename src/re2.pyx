@@ -404,16 +404,24 @@ cdef class Pattern:
 
         if hasattr(string, 'tostring'):
             string = string.tostring()
+
         string = unicode_to_bytestring(string, &encoded)
+
         if pystring_to_bytestring(string, &cstring, &size) == -1:
             raise TypeError("expected string or buffer")
 
-        if endpos != -1 and endpos < size:
+        if endpos >= 0 and endpos <= pos:
+            return None
+
+        if endpos >= 0 and endpos < size:
             size = endpos
+
+        if pos > size:
+            return None
 
         sp = new _re2.StringPiece(cstring, size)
         with nogil:
-            result = self.re_pattern.Match(sp[0], <int>pos, anchoring, m.matches, self.ngroups + 1)
+            result = self.re_pattern.Match(sp[0], <int>pos, <int>size, anchoring, m.matches, self.ngroups + 1)
 
         del sp
         if result == 0:
@@ -473,7 +481,7 @@ cdef class Pattern:
         while True:
             m = Match(self, self.ngroups + 1)
             with nogil:
-                result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
+                result = self.re_pattern.Match(sp[0], <int>pos, <int>size, _re2.UNANCHORED, m.matches, self.ngroups + 1)
             if result == 0:
                 break
             m.encoded = encoded
@@ -550,7 +558,7 @@ cdef class Pattern:
 
         while True:
             with nogil:
-                result = self.re_pattern.Match(sp[0], <int>(pos + lookahead), _re2.UNANCHORED, matches, self.ngroups + 1)
+                result = self.re_pattern.Match(sp[0], <int>(pos + lookahead), <int>size, _re2.UNANCHORED, matches, self.ngroups + 1)
             if result == 0:
                 break
 
@@ -661,7 +669,7 @@ cdef class Pattern:
             sp = new _re2.StringPiece(fixed_repl.c_str())
         else:
             sp = new _re2.StringPiece(cstring, size)
-        
+
         input_str = new _re2.cpp_string(string)
         if not count:
             total_replacements = _re2.pattern_GlobalReplace(input_str,
@@ -716,7 +724,7 @@ cdef class Pattern:
             while True:
                 m = Match(self, self.ngroups + 1)
                 with nogil:
-                    result = self.re_pattern.Match(sp[0], <int>pos, _re2.UNANCHORED, m.matches, self.ngroups + 1)
+                    result = self.re_pattern.Match(sp[0], <int>pos, <int>size, _re2.UNANCHORED, m.matches, self.ngroups + 1)
                 if result == 0:
                     break
 
@@ -817,13 +825,13 @@ def prepare_pattern(pattern, int flags):
                     if this in (None, "\n"):
                         break
                 continue
-        
+
         if this[0] not in '[\\':
             new_pattern.append(this)
             continue
 
         elif this == '[':
-            new_pattern.append(this)    
+            new_pattern.append(this)
             while 1:
                 this = source.get()
                 if this is None:
@@ -839,7 +847,7 @@ def prepare_pattern(pattern, int flags):
                             new_pattern.append(r'_\p{L}\p{Nd}')
                         elif this[1] == 's':
                             new_pattern.append(r'\s\p{Z}')
-                        else:   
+                        else:
                             new_pattern.append(this)
                     else:
                         new_pattern.append(this)
