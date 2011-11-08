@@ -774,6 +774,9 @@ def compile(pattern, int flags=0, int max_mem=8388608):
 class BackreferencesException(Exception):
     pass
 
+class CharClassProblemException(Exception):
+    pass
+
 WHITESPACE = set(" \t\n\r\v\f")
 
 class Tokenizer:
@@ -847,7 +850,17 @@ def prepare_pattern(pattern, int flags):
                             new_pattern.append(r'_\p{L}\p{Nd}')
                         elif this[1] == 's':
                             new_pattern.append(r'\s\p{Z}')
-                        else:
+                        elif this[1] == 'D':
+                            new_pattern.append(r'\P{Nd}')
+                        elif this[1] == 'W':
+                            # Since \w and \s are made out of several character groups, 
+                            # I don't see a way to convert their complements into a group
+                            # without rewriting the whole expression, which seems too complicated.
+
+                            raise CharClassProblemException()
+                        elif this[1] == 'S':
+                            raise CharClassProblemException()
+                        else:   
                             new_pattern.append(this)
                     else:
                         new_pattern.append(this)
@@ -873,6 +886,12 @@ def prepare_pattern(pattern, int flags):
                     new_pattern.append(r'[_\p{L}\p{Nd}]')
                 elif this[1] == 's':
                     new_pattern.append(r'[\s\p{Z}]')
+                elif this[1] == 'D':
+                    new_pattern.append(r'[^\p{Nd}]')
+                elif this[1] == 'W':
+                    new_pattern.append(r'[^_\p{L}\p{Nd}]')
+                elif this[1] == 'S':
+                    new_pattern.append(r'[^\s\p{Z}]')
                 else:
                     new_pattern.append(this)
             else:
@@ -903,6 +922,14 @@ def _compile(pattern, int flags=0, int max_mem=8388608):
         pattern = prepare_pattern(original_pattern, flags)
     except BackreferencesException:
         error_msg = "Backreferences not supported"
+        if current_notification == <int>FALLBACK_EXCEPTION:
+            # Raise an exception regardless of the type of error.
+            raise RegexError(error_msg)
+        elif current_notification == <int>FALLBACK_WARNING:
+            warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
+        return re.compile(original_pattern, flags)
+    except CharClassProblemException:
+        error_msg = "\W and \S not supported inside character classes"
         if current_notification == <int>FALLBACK_EXCEPTION:
             # Raise an exception regardless of the type of error.
             raise RegexError(error_msg)

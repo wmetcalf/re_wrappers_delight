@@ -41,6 +41,19 @@ Test unicode character groups
     u'\u1680'
     >>> re.findall(r'[\s\d\w]', 'hey 123', re.UNICODE)
     ['h', 'e', 'y', ' ', '1', '2', '3']
+    >>> re.search(r'\D', u'\u0661x', re.UNICODE).group(0)
+    u'x'
+    >>> re.search(r'\W', u'\u0401!', re.UNICODE).group(0)
+    u'!'
+    >>> re.search(r'\S', u'\u1680x', re.UNICODE).group(0)
+    u'x'
+    >>> re.search(r'[\D]', u'\u0661x', re.UNICODE).group(0)
+    u'x'
+    >>> re.search(r'[\W]', u'\u0401!', re.UNICODE).group(0)
+    u'!'
+    >>> re.search(r'[\S]', u'\u1680x', re.UNICODE).group(0)
+    u'x'
+
 
 Group positions need to be fixed with unicode
 
