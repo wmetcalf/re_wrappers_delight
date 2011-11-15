@@ -21,6 +21,8 @@ except ImportError:
 import os
 import gzip
 
+re2.set_fallback_notification(re2.FALLBACK_EXCEPTION)
+
 os.chdir(os.path.dirname(__file__) or '.')
 
 tests = {}
@@ -135,10 +137,10 @@ def getwikidata():
 
 
 
-@register_test("Findall URI|Email",
-               r'([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)',
-               2,
-               data=getwikidata())
+#register_test("Findall URI|Email",
+#              r'([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)',
+#              2,
+#              data=getwikidata())
 def findall_uriemail(pattern, data):
     """
     Find list of '([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|([^ @]+)@([^ @]+)'
@@ -147,9 +149,9 @@ def findall_uriemail(pattern, data):
 
 
 
-@register_test("Replace WikiLinks",
-               r'(\[\[(^\|)+.*?\]\])',
-               data=getwikidata())
+#register_test("Replace WikiLinks",
+#              r'(\[\[(^\|)+.*?\]\])',
+#              data=getwikidata())
 def replace_wikilinks(pattern, data):
     """
     This test replaces links of the form [[Obama|Barack_Obama]] to Obama.
@@ -158,9 +160,9 @@ def replace_wikilinks(pattern, data):
 
 
 
-@register_test("Remove WikiLinks",
-               r'(\[\[(^\|)+.*?\]\])',
-               data=getwikidata())
+#register_test("Remove WikiLinks",
+#              r'(\[\[(^\|)+.*?\]\])',
+#              data=getwikidata())
 def remove_wikilinks(pattern, data):
     """
     This test replaces links of the form [[Obama|Barack_Obama]] to the empty string
@@ -169,9 +171,11 @@ def remove_wikilinks(pattern, data):
 
 
 
-@register_test("Remove WikiLinks",
-               r'(<page[^>]*>)',
-               data=getwikidata())
+
+
+#register_test("Remove WikiLinks",
+#              r'(<page[^>]*>)',
+#              data=getwikidata())
 def split_pages(pattern, data):
     """
     This test splits the data by the <page> tag.
@@ -179,8 +183,27 @@ def split_pages(pattern, data):
     return len(pattern.split(data))
 
 
+def getweblogdata():
+    return open(os.path.join(os.path.dirname(__file__), 'access.log'))
 
+@register_test("weblog scan",
+               #r'^(\S+) (\S+) (\S+) \[(\d{1,2})/(\w{3})/(\d{4}):(\d{2}):(\d{2}):(\d{2}) -(\d{4})\] "(\S+) (\S+) (\S+)" (\d+) (\d+|-) "([^"]+)" "([^"]+)"\n',
+#               '(\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) ? (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (".*?"|-) (\S+) (\S+) (\S+) (\S+)',
+               '(\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) ? (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+)',
+               data=getweblogdata())
+def weblog_matches(pattern, data):
+    """
+    Match weblog data line by line.
+    """
+    total=0
+    for line in data.read()[:20000].splitlines():
+        p = pattern.search(line)
+        #for p in pattern.finditer(data.read()[:20000]):
+        if p:
+            total += len(p.groups())
+    data.seek(0)
 
+    return 0
 
 if __name__ == '__main__':
     main()

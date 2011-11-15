@@ -20,8 +20,8 @@ FALLBACK_QUIETLY = 0
 FALLBACK_WARNING = 1
 FALLBACK_EXCEPTION = 2
 
-VERSION = (0, 2, 16)
-VERSION_HEX = 0x000210
+VERSION = (0, 2, 18)
+VERSION_HEX = 0x000212
 
 # Type of compiled re object from Python stdlib
 SREPattern = type(re.compile(''))
@@ -120,7 +120,7 @@ cdef class Match:
         self._pattern_object = pattern_object
 
     def __dealloc__(self):
-        _re2.delete_StringPiece_array(self.matches)
+       _re2.delete_StringPiece_array(self.matches)
 
     property re:
         def __get__(self):
@@ -423,6 +423,8 @@ cdef class Pattern:
         with nogil:
             result = self.re_pattern.Match(sp[0], <int>pos, <int>size, anchoring, m.matches, self.ngroups + 1)
 
+        return None
+        """
         del sp
         if result == 0:
             return None
@@ -436,7 +438,7 @@ cdef class Pattern:
         else:
             m._endpos = endpos
         return m
-
+        """
 
     def search(self, string, int pos=0, int endpos=-1):
         """
@@ -954,6 +956,9 @@ def _compile(pattern, int flags=0, int max_mem=8388608):
     s = new _re2.StringPiece(string, length)
 
     cdef _re2.RE2 * re_pattern = new _re2.RE2(s[0], opts)
+
+    print re_pattern.ok()
+
     if not re_pattern.ok():
         # Something went wrong with the compilation.
         del s
