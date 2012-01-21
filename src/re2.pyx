@@ -957,8 +957,6 @@ def _compile(pattern, int flags=0, int max_mem=8388608):
 
     cdef _re2.RE2 * re_pattern = new _re2.RE2(s[0], opts)
 
-    print re_pattern.ok()
-
     if not re_pattern.ok():
         # Something went wrong with the compilation.
         del s
