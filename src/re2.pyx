@@ -423,8 +423,6 @@ cdef class Pattern:
         with nogil:
             result = self.re_pattern.Match(sp[0], <int>pos, <int>size, anchoring, m.matches, self.ngroups + 1)
 
-        return None
-        """
         del sp
         if result == 0:
             return None
@@ -438,7 +436,7 @@ cdef class Pattern:
         else:
             m._endpos = endpos
         return m
-        """
+
 
     def search(self, string, int pos=0, int endpos=-1):
         """
