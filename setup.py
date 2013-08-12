@@ -48,13 +48,13 @@ _re2_prefixes = [
     '/usr',
     '/usr/local',
     '/opt/',
-    ]
+]
 
 for re2_prefix in _re2_prefixes:
     if os.path.exists(os.path.join(re2_prefix, "include", "re2")):
         break
 else:
-    raise OSError("Cannot find RE2 library. Please install it from http://code.google.com/p/re2/wiki/Install")
+    re2_prefix = ""
 
 BASE_DIR = os.path.dirname(__file__)
 
@@ -81,14 +81,17 @@ def main():
         license="New BSD License",
         author_email = "mike@axiak.net",
         url = "http://github.com/axiak/pyre2/",
-        ext_modules = [Extension("re2",
-                                 ext_files,
-                                 language="c++",
-                                 include_dirs=[os.path.join(re2_prefix, "include")],
-                                 libraries=["re2"],
-                                 library_dirs=[os.path.join(re2_prefix, "lib")],
-                                 runtime_library_dirs=[os.path.join(re2_prefix, "lib")],
-                                 )],
+        ext_modules = [
+            Extension(
+                "re2",
+                ext_files,
+                language="c++",
+                include_dirs=[os.path.join(re2_prefix, "include")] if re2_prefix else [],
+                libraries=["re2"],
+                library_dirs=[os.path.join(re2_prefix, "lib")] if re2_prefix else [],
+                runtime_library_dirs=[os.path.join(re2_prefix, "lib")] if re2_prefix else [],
+            )
+        ],
         cmdclass=cmdclass,
         classifiers = [
             'License :: OSI Approved :: BSD License',
