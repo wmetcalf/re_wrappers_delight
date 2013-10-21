@@ -94,8 +94,8 @@ cdef extern from "re2/re2.h" namespace "re2":
     ctypedef Options const_Options "const RE2::Options"
 
     cdef cppclass RE2:
-        RE2(const_StringPiece pattern, Options option)
-        RE2(const_StringPiece pattern)
+        RE2(const_StringPiece pattern, Options option) nogil
+        RE2(const_StringPiece pattern) nogil
         int Match(const_StringPiece text, int startpos, int endpos,
                   Anchor anchor, StringPiece * match, int nmatch) nogil
         int NumberOfCapturingGroups()
