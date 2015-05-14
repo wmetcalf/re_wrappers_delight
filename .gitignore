@@ -7,3 +7,4 @@ re2.so
 *~
 *.pyc
 *.swp
+*.egg-info

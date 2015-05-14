@@ -74,7 +74,7 @@ def get_authors():
 def main():
     setup(
         name="re2",
-        version="0.2.20",
+        version="0.2.21",
         description="Python wrapper for Google's RE2 using Cython",
         long_description=get_long_description(),
         author=get_authors(),
