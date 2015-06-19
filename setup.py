@@ -6,6 +6,11 @@ from distutils.core import setup, Extension, Command
 
 MINIMUM_CYTHON_VERSION = '0.13'
 
+
+def cmp(a, b):
+    return (a > b) - (a < b)
+
+
 class TestCommand(Command):
     description = 'Run packaged tests'
     user_options = []
