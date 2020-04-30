@@ -161,7 +161,9 @@ def _prepare_pattern(bytes pattern, int flags):
                 elif this == b'\\':
                     n += 1
                     that = cstring[n]
-                    if flags & _U:
+                    if that == b'b':
+                        result.extend(br'\010')
+                    elif flags & _U:
                         if that == b'd':
                             result.extend(br'\p{Nd}')
                         elif that == b'w':

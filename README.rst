@@ -126,7 +126,7 @@ buzzes along.
 
 In the below example, I'm running the data against 8MB of text from the colossal Wikipedia
 XML file. I'm running them multiple times, being careful to use the ``timeit`` module.
-To see more details, please see the `performance script <http://github.com/axiak/pyre2/tree/master/tests/performance.py>`_.
+To see more details, please see the `performance script <http://github.com/andreasvc/pyre2/tree/master/tests/performance.py>`_.
 
 +-----------------+---------------------------------------------------------------------------+------------+--------------+---------------+-------------+-----------------+----------------+
 |Test             |Description                                                                |# total runs|``re`` time(s)|``re2`` time(s)|% ``re`` time|``regex`` time(s)|% ``regex`` time|
@@ -148,9 +148,8 @@ The tests show the following differences with Python's ``re`` module:
 * The ``$`` operator in Python's ``re`` matches twice if the string ends
   with ``\n``. This can be simulated using ``\n?$``, except when doing
   substitutions.
-* ``pyre2`` and Python's ``re`` behave differently with nested and empty groups;
-  ``pyre2`` will return an empty string in cases where Python would return None
-  for a group that did not participate in a match.
+* ``pyre2`` and Python's ``re`` may behave differently with nested groups.
+	See ``tests/emptygroups.txt`` for the examples.
 
 Please report any further issues with ``pyre2``.
 
@@ -161,7 +160,7 @@ If you would like to help, one thing that would be very useful
 is writing comprehensive tests for this. It's actually really easy:
 
 * Come up with regular expression problems using the regular python 're' module.
-* Write a session in python traceback format `Example <http://github.com/axiak/pyre2/blob/master/tests/search.txt>`_.
+* Write a session in python traceback format `Example <http://github.com/andreasvc/pyre2/blob/master/tests/search.txt>`_.
 * Replace your ``import re`` with ``import re2 as re``.
 * Save it as a .txt file in the tests directory. You can comment on it however you like and indent the code with 4 spaces.
 

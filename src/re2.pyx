@@ -107,7 +107,9 @@ include "includes.pxi"
 import re
 import sys
 import warnings
+from re import error as RegexError
 
+error = re.error
 
 # Import re flags to be compatible.
 I, M, S, U, X, L = re.I, re.M, re.S, re.U, re.X, re.L
@@ -242,13 +244,6 @@ def escape(pattern):
                 else:
                     s[i] = b'\\' + c
     return u''.join(s) if uni else b''.join(s)
-
-
-class RegexError(re.error):
-    """Some error has occured in compilation of the regex."""
-    pass
-
-error = RegexError
 
 
 class BackreferencesException(Exception):

@@ -22,7 +22,7 @@ character literals:
     >>> re.match("\911", "")  # doctest: +IGNORE_EXCEPTION_DETAIL +ELLIPSIS
     Traceback (most recent call last):
     ...
-    RegexError: invalid escape sequence: \9
+    re.error: invalid escape sequence: \9
 
 character class literals:
 
@@ -41,5 +41,5 @@ character class literals:
     >>> re.match("[\911]", "")  # doctest: +IGNORE_EXCEPTION_DETAIL +ELLIPSIS
     Traceback (most recent call last):
     ...
-    RegexError: invalid escape sequence: \9
+    re.error: invalid escape sequence: \9
 

@@ -71,7 +71,7 @@ tests = [
 
     # Test octal escapes
     ('\\1', 'a', SYNTAX_ERROR),    # Backreference
-    ('[\\1]', '\1', SUCCEED, 'found', '\1'),  # Character
+    ('[\\01]', '\1', SUCCEED, 'found', '\1'),  # Character
     ('\\09', chr(0) + '9', SUCCEED, 'found', chr(0) + '9'),
     ('\\141', 'a', SUCCEED, 'found', 'a'),
     ('(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)\\119', 'abcdefghijklk9', SUCCEED, 'found+"-"+g11', 'abcdefghijklk9-k'),
@@ -87,8 +87,8 @@ tests = [
     (r'[\a][\b][\f][\n][\r][\t][\v]', '\a\b\f\n\r\t\v', SUCCEED, 'found', '\a\b\f\n\r\t\v'),
     # NOTE: not an error under PCRE/PRE:
     # (r'\u', '', SYNTAX_ERROR),    # A Perl escape
-    (r'\c\e\g\h\i\j\k\m\o\p\q\y\z', 'ceghijkmopqyz', SUCCEED, 'found', 'ceghijkmopqyz'),
-    (r'\xff', '\377', SUCCEED, 'found', chr(255)),
+    # (r'\c\e\g\h\i\j\k\m\o\p\q\y\z', 'ceghijkmopqyz', SUCCEED, 'found', 'ceghijkmopqyz'),
+    # (r'\xff', '\377', SUCCEED, 'found', chr(255)),
     # new \x semantics
     (r'\x00ffffffffffffff', '\377', FAIL, 'found', chr(255)),
     (r'\x00f', '\017', FAIL, 'found', chr(15)),
@@ -106,8 +106,8 @@ tests = [
     ('a.*b', 'acc\nccb', FAIL),
     ('a.{4,5}b', 'acc\nccb', FAIL),
     ('a.b', 'a\rb', SUCCEED, 'found', 'a\rb'),
-    ('a.b(?s)', 'a\nb', SUCCEED, 'found', 'a\nb'),
-    ('a.*(?s)b', 'acc\nccb', SUCCEED, 'found', 'acc\nccb'),
+    ('(?s)a.b', 'a\nb', SUCCEED, 'found', 'a\nb'),
+    ('(?s)a.*b', 'acc\nccb', SUCCEED, 'found', 'acc\nccb'),
     ('(?s)a.{4,5}b', 'acc\nccb', SUCCEED, 'found', 'acc\nccb'),
     ('(?s)a.b', 'a\nb', SUCCEED, 'found', 'a\nb'),
 
@@ -563,8 +563,9 @@ tests = [
     # Check odd placement of embedded pattern modifiers
 
     # not an error under PCRE/PRE:
-    ('w(?i)', 'W', SUCCEED, 'found', 'W'),
+    # ('w(?i)', 'W', SUCCEED, 'found', 'W'),
     # ('w(?i)', 'W', SYNTAX_ERROR),
+
 
     # Comments using the x embedded pattern modifier
 
@@ -603,12 +604,12 @@ xyzabc
     (r'([\s]*)([\S]*)([\s]*)', ' testing!1972', SUCCEED, 'g3+g2+g1', 'testing!1972 '),
     (r'(\s*)(\S*)(\s*)', ' testing!1972', SUCCEED, 'g3+g2+g1', 'testing!1972 '),
 
-    (r'\xff', '\377', SUCCEED, 'found', chr(255)),
+    # (r'\xff', '\377', SUCCEED, 'found', chr(255)),
     # new \x semantics
     (r'\x00ff', '\377', FAIL),
     # (r'\x00ff', '\377', SUCCEED, 'found', chr(255)),
-    (r'\t\n\v\r\f\a\g', '\t\n\v\r\f\ag', SUCCEED, 'found', '\t\n\v\r\f\ag'),
-    ('\t\n\v\r\f\a\g', '\t\n\v\r\f\ag', SUCCEED, 'found', '\t\n\v\r\f\ag'),
+    # (r'\t\n\v\r\f\a\g', '\t\n\v\r\f\ag', SUCCEED, 'found', '\t\n\v\r\f\ag'),
+    # ('\t\n\v\r\f\a\g', '\t\n\v\r\f\ag', SUCCEED, 'found', '\t\n\v\r\f\ag'),
     (r'\t\n\v\r\f\a', '\t\n\v\r\f\a', SUCCEED, 'found', chr(9)+chr(10)+chr(11)+chr(13)+chr(12)+chr(7)),
     (r'[\t][\n][\v][\r][\f][\b]', '\t\n\v\r\f\b', SUCCEED, 'found', '\t\n\v\r\f\b'),
 
@@ -627,7 +628,7 @@ xyzabc
     # bug 114033: nothing to repeat
     (r'(x?)?', 'x', SUCCEED, 'found', 'x'),
     # bug 115040: rescan if flags are modified inside pattern
-    (r' (?x)foo ', 'foo', SUCCEED, 'found', 'foo'),
+    # (r' (?x)foo ', 'foo', SUCCEED, 'found', 'foo'),
     # bug 115618: negative lookahead
     (r'(?<!abc)(d.f)', 'abcdefdof', SUCCEED, 'found', 'dof'),
     # bug 116251: character class bug
