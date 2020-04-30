@@ -357,10 +357,6 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.search(r"\B(b.)\B",
                                    "abc bcd bc abxd").group(1), "bx")
         self.assertEqual(re.search(r"\b(b.)\b",
-                                   "abcd abc bcd bx", re.LOCALE).group(1), "bx")
-        self.assertEqual(re.search(r"\B(b.)\B",
-                                   "abc bcd bc abxd", re.LOCALE).group(1), "bx")
-        self.assertEqual(re.search(r"\b(b.)\b",
                                    "abcd abc bcd bx", re.UNICODE).group(1), "bx")
         self.assertEqual(re.search(r"\B(b.)\B",
                                    "abc bcd bc abxd", re.UNICODE).group(1), "bx")
@@ -376,10 +372,6 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.search(r"^\Aabc\Z$", u"\nabc\n", re.M), None)
         self.assertEqual(re.search(r"\d\D\w\W\s\S",
                                    "1aa! a").group(0), "1aa! a")
-        self.assertEqual(re.search(r"\d\D\w\W\s\S",
-                                   "1aa! a", re.LOCALE).group(0), "1aa! a")
-        self.assertEqual(re.search(r"\d\D\w\W\s\S",
-                                   "1aa! a", re.UNICODE).group(0), "1aa! a")
 
     def test_bigcharset(self):
         self.assertEqual(re.match(u"([\u2222\u2223])",
@@ -466,13 +458,12 @@ class ReTests(unittest.TestCase):
 
     def test_constants(self):
         self.assertEqual(re.I, re.IGNORECASE)
-        self.assertEqual(re.L, re.LOCALE)
         self.assertEqual(re.M, re.MULTILINE)
         self.assertEqual(re.S, re.DOTALL)
         self.assertEqual(re.X, re.VERBOSE)
 
     def test_flags(self):
-        for flag in [re.I, re.M, re.X, re.S, re.L]:
+        for flag in [re.I, re.M, re.X, re.S]:
             self.assertNotEqual(re.compile('^pattern$', flag), None)
 
     def test_sre_character_literals(self):
@@ -802,13 +793,6 @@ def run_re_tests():
                 result = obj.search(s)
                 if result is None:
                     print('=== Fails on case-insensitive match', t)
-
-                # Try the match with LOCALE enabled, and check that it
-                # still succeeds.
-                obj = re.compile(pattern, re.LOCALE)
-                result = obj.search(s)
-                if result is None:
-                    print('=== Fails on locale-sensitive match', t)
 
                 # Try the match with UNICODE locale enabled, and check
                 # that it still succeeds.
