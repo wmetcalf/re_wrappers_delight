@@ -20,7 +20,7 @@ def _compile(object pattern, int flags=0, int max_mem=8388608):
         elif current_notification == FALLBACK_WARNING:
             warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
         try:
-            result = re.compile(pattern, flags)
+            result = PythonRePattern(pattern, flags)
         except re.error as err:
             raise RegexError(*err.args)
         return result
@@ -93,7 +93,7 @@ def _compile(object pattern, int flags=0, int max_mem=8388608):
             raise RegexError(error_msg)
         elif current_notification == FALLBACK_WARNING:
             warnings.warn("WARNING: Using re module. Reason: %s" % error_msg)
-        return re.compile(original_pattern, flags)
+        return PythonRePattern(original_pattern, flags)
 
     cdef Pattern pypattern = Pattern()
     cdef map[cpp_string, int] named_groups = re_pattern.NamedCapturingGroups()

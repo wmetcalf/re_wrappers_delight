@@ -72,7 +72,8 @@ This module exports the following functions::
     count     Count all occurrences of a pattern in a string.
     match     Match a regular expression pattern to the beginning of a string.
     fullmatch Match a regular expression pattern to all of a string.
-    search    Search a string for the presence of a pattern.
+    search    Search a string for a pattern and return Match object.
+    contains  Same as search, but only return bool.
     sub       Substitute occurrences of a pattern found in a string.
     subn      Same as sub, but also return the number of substitutions made.
     split     Split a string by the occurrences of a pattern.
@@ -168,6 +169,12 @@ def fullmatch(pattern, string, int flags=0):
     """Try to apply the pattern to the entire string, returning
     a ``Match`` object, or ``None`` if no match was found."""
     return compile(pattern, flags).fullmatch(string)
+
+
+def contains(pattern, string, int flags=0):
+    """Scan through string looking for a match to the pattern, returning
+    True or False."""
+    return compile(pattern, flags).contains(string)
 
 
 def finditer(pattern, string, int flags=0):

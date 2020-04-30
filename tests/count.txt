@@ -9,13 +9,10 @@ This one is from http://docs.python.org/library/re.html?#finding-all-adverbs:
     >>> re2.count(r"\w+ly", "He was carefully disguised but captured quickly by police.")
     2
 
-This one makes sure all groups are found:
+Groups should not affect count():
 
     >>> re2.count(r"(\w+)=(\d+)", "foo=1,foo=2")
     2
-
-When there's only one matched group, it should not be returned in a tuple:
-
     >>> re2.count(r"(\w)\w", "fx")
     1
 
@@ -31,3 +28,11 @@ A pattern matching an empty string:
 
     >>> re2.count("", "foo")
     4
+
+contains tests
+==============
+
+	>>> re2.contains('a', 'bbabb')
+	True
+	>>> re2.contains('a', 'bbbbb')
+	False

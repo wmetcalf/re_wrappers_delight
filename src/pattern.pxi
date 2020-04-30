@@ -78,6 +78,45 @@ cdef class Pattern:
             release_cstring(&buf)
         return m
 
+    def contains(self, object string, int pos=0, int endpos=-1):
+        """"contains(string[, pos[, endpos]]) --> bool."
+
+        Scan through string looking for a match, and return True or False."""
+        cdef char * cstring
+        cdef Py_ssize_t size
+        cdef Py_buffer buf
+        cdef int retval
+        cdef int encoded = 0
+        cdef StringPiece * sp
+
+        if 0 <= endpos <= pos:
+            return False
+
+        bytestr = unicode_to_bytes(string, &encoded, self.encoded)
+        if pystring_to_cstring(bytestr, &cstring, &size, &buf) == -1:
+            raise TypeError('expected string or buffer')
+        try:
+            if encoded == 2 and (pos or endpos != -1):
+                utf8indices(cstring, size, &pos, &endpos)
+            if pos > size:
+                return False
+            if 0 <= endpos < size:
+                size = endpos
+
+            sp = new StringPiece(cstring, size)
+            with nogil:
+                retval = self.re_pattern.Match(
+                        sp[0],
+                        pos,
+                        size,
+                        UNANCHORED,
+                        NULL,
+                        0)
+            del sp
+        finally:
+            release_cstring(&buf)
+        return retval != 0
+
     def count(self, object string, int pos=0, int endpos=-1):
         """Return number of non-overlapping matches of pattern in string."""
         cdef char * cstring
@@ -547,3 +586,53 @@ cdef class Pattern:
 
     def __dealloc__(self):
         del self.re_pattern
+
+
+class PythonRePattern:
+    """A wrapper for re.Pattern to support the extra methods defined by re2
+    (contains, count)."""
+    def __init__(self, pattern, flags=None):
+        self._pattern = re.compile(pattern, flags)
+        self.pattern = pattern
+        self.flags = flags
+        self.groupindex = self._pattern.groupindex
+        self.groups = self._pattern.groups
+
+    def contains(self, string):
+        return bool(self._pattern.search(string))
+
+    def count(self, string, pos=0, endpos=9223372036854775807):
+        return len(self._pattern.findall(string, pos, endpos))
+
+    def findall(self, string, pos=0, endpos=9223372036854775807):
+        return self._pattern.findall(string, pos, endpos)
+
+    def finditer(self, string, pos=0, endpos=9223372036854775807):
+        return self._pattern.finditer(string, pos, endpos)
+
+    def fullmatch(self, string, pos=0, endpos=9223372036854775807):
+        return self._pattern.fullmatch(string, pos, endpos)
+
+    def match(self, string, pos=0, endpos=9223372036854775807):
+        return self._pattern.match(string, pos, endpos)
+
+    def scanner(self, string, pos=0, endpos=9223372036854775807):
+        return self._pattern.scanner(string, pos, endpos)
+
+    def search(self, string, pos=0, endpos=9223372036854775807):
+        return self._pattern.search(string, pos, endpos)
+
+    def split(self, string, maxsplit=0):
+        return self._pattern.split(string, maxsplit)
+
+    def sub(self, repl, string, count=0):
+        return self._pattern.sub(repl, string, count)
+
+    def subn(self, repl, string, count=0):
+        return self._pattern.subn(repl, string, count)
+
+    def __repr__(self):
+        return repr(self._pattern)
+
+    def __reduce__(self):
+        return (self, (self.pattern, self.flags))
