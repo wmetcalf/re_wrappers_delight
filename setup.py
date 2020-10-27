@@ -106,7 +106,7 @@ def main():
             })
     setup(
         name='pyre2',
-        version='0.3',
+        version='0.3.1',
         description='Python wrapper for Google\'s RE2 using Cython',
         long_description=get_long_description(),
         author=get_authors(),
