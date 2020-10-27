@@ -105,14 +105,14 @@ def main():
                 'warn.unreachable': True,
             })
     setup(
-        name='re2',
+        name='pyre2',
         version='0.3',
         description='Python wrapper for Google\'s RE2 using Cython',
         long_description=get_long_description(),
         author=get_authors(),
         license='New BSD License',
-        author_email = 'mike@axiak.net',
-        url = 'http://github.com/axiak/pyre2/',
+        author_email='andreas@unstable.nl',
+        url='https://github.com/andreasvc/pyre2',
         ext_modules = ext_modules,
         cmdclass=cmdclass,
         classifiers = [
