@@ -108,4 +108,4 @@ jobs:
           draft: true
           prerelease: false
           # uncomment below to upload wheels to github releases
-          # files: ./pyre2*.whl
+          # files: wheels/pyre2*.whl
