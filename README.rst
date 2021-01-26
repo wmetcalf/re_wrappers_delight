@@ -16,8 +16,15 @@ Intended as a drop-in replacement for ``re``. Unicode is supported by encoding
 to UTF-8, and bytes strings are treated as UTF-8 when the UNICODE flag is given.
 For best performance, work with UTF-8 encoded bytes strings.
 
-Platform Dependencies
-=====================
+Installation
+============
+
+Normal usage for Linux/Mac/Windows::
+
+  $ pip install pyre2
+
+Compiling from source
+---------------------
 
 Requirements for building the C++ extension from the repo source:
 
