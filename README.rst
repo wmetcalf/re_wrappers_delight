@@ -1,33 +1,26 @@
 =====
-pyre2
+pyre2: Python RE2 wrapper for linear-time regular expressions
 =====
 
-**Python wrapper for RE2**
-
-CI Status
-
 .. image:: https://github.com/andreasvc/pyre2/workflows/Build/badge.svg
-    :target: https://github.com/freepn/andreasvc/pyre2/actions?query=workflow:Build
+    :target: https://github.com/andreasvc/pyre2/actions?query=workflow:Build
     :alt: Build CI Status
 
-.. image:: https://github.com/andreasvc/pyre2/workflows/Conda/badge.svg
-    :target: https://github.com/freepn/andreasvc/pyre2/actions?query=workflow:Conda
-    :alt: Conda CI Status
-
 .. image:: https://github.com/andreasvc/pyre2/workflows/Release/badge.svg
-    :target: https://github.com/freepn/andreasvc/pyre2/actions?query=workflow:Release
+    :target: https://github.com/andreasvc/pyre2/actions?query=workflow:Release
     :alt: Release CI Status
 
 .. image:: https://img.shields.io/github/v/tag/andreasvc/pyre2?color=green&include_prereleases&label=latest%20release
     :target: https://github.com/andreasvc/pyre2/releases
     :alt: GitHub tag (latest SemVer, including pre-release)
 
-
-Packaging
-
 .. image:: https://badge.fury.io/py/pyre2.svg
    :target: https://badge.fury.io/py/pyre2
     :alt: Pypi version
+
+.. image:: https://github.com/andreasvc/pyre2/workflows/Conda/badge.svg
+    :target: https://github.com/andreasvc/pyre2/actions?query=workflow:Conda
+    :alt: Conda CI Status
 
 .. image:: https://img.shields.io/github/license/andreasvc/pyre2
     :target: https://github.com/andreasvc/pyre2/blob/master/LICENSE
@@ -36,9 +29,6 @@ Packaging
 .. image:: https://img.shields.io/badge/python-3.6+-blue.svg
     :target: https://www.python.org/downloads/
     :alt: Python version
-
-
-Anaconda cloud
 
 .. image:: https://anaconda.org/conda-forge/pyre2/badges/version.svg
    :target: https://anaconda.org/conda-forge/pyre2
