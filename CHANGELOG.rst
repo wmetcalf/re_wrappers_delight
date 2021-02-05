@@ -1,3 +1,16 @@
+v0.3.3 (2021-01-26)
+-------------------
+
+- Bump version. [Andreas van Cranenburgh]
+- Update README.rst. fixes #21. [Andreas van Cranenburgh]
+- Merge pull request #20 from freepn/new-bld. [Andreas van Cranenburgh]
+
+  New cmake and pybind11 build setup
+- Add .gitchangelog.rc and generated CHANGELOG.rst (keep HISTORY)
+  [Stephen L Arnold]
+- Update wheel builds for Linux, Macos, and Windows. [Stephen L Arnold]
+
+
 v0.3.2 (2020-12-16)
 -------------------
 - Bump version. [Andreas van Cranenburgh]
