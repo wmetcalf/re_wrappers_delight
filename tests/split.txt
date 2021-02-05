@@ -14,3 +14,4 @@ This one tests to make sure that unicode / utf8 data is parsed correctly.
     ... b'\xe4\xbd\xa0\xe5\x91\xa2?']
     True
 
+    >>> re2.set_fallback_notification(re2.FALLBACK_QUIETLY)

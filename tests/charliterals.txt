@@ -1,4 +1,6 @@
     >>> import re2 as re
+    >>> import warnings
+    >>> warnings.filterwarnings('ignore', category=DeprecationWarning)
 
 character literals:
 

@@ -9,8 +9,6 @@ To add a test, you can add a function to the bottom of this page that uses the
 import it.
 """
 from timeit import Timer
-import simplejson
-
 import re2
 import re
 try:

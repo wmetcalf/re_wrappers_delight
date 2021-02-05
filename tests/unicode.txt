@@ -48,7 +48,7 @@ Test unicode character groups
     True
     >>> re.search(u'\\S', u'\u1680x', re.UNICODE).group(0) == u'x'
     True
-    >>> re.set_fallback_notification(re.FALLBACK_WARNING)
+    >>> re.set_fallback_notification(re.FALLBACK_QUIETLY)
     >>> re.search(u'[\\W]', u'\u0401!', re.UNICODE).group(0) == u'!'
     True
     >>> re.search(u'[\\S]', u'\u1680x', re.UNICODE).group(0) == u'x'
@@ -68,3 +68,4 @@ Positions are translated transparently between unicode and UTF-8
     >>> re.search(u' (.)', data).string == data
     True
 
+    >>> re.set_fallback_notification(re.FALLBACK_QUIETLY)

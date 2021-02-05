@@ -36,3 +36,5 @@ contains tests
 	True
 	>>> re2.contains('a', 'bbbbb')
 	False
+
+    >>> re2.set_fallback_notification(re2.FALLBACK_QUIETLY)

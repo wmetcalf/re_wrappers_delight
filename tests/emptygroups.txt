@@ -32,3 +32,5 @@ The following show different behavior for re and re2:
     ('Hello', '')
     >>> re2.search(r'((.*)*.)', 'Hello').groups()
     ('Hello', 'Hell')
+
+    >>> re2.set_fallback_notification(re2.FALLBACK_QUIETLY)

@@ -39,3 +39,4 @@ If pattern matches an empty string, do it only once at the end:
     >>> re2.findall(r'\b', 'The quick brown fox jumped over the lazy dog')
     ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
 
+    >>> re2.set_fallback_notification(re2.FALLBACK_QUIETLY)

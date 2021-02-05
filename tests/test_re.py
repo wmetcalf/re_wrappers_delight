@@ -1,8 +1,8 @@
 from __future__ import print_function
 try:
-    from test.test_support import verbose, run_unittest, import_module
+    from test.test_support import verbose
 except ImportError:
-    from test.support import verbose, run_unittest, import_module
+    from test.support import verbose
 import re2 as re
 from re import Scanner
 import os

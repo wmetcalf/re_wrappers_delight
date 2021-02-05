@@ -26,3 +26,4 @@ expand templates as if the .sub() method was called on the pattern.
     >>> m.expand('\t\n\x0b\r\x0c\x07\x08\\B\\Z\x07\\A\\w\\W\\s\\S\\d\\D')
     '\t\n\x0b\r\x0c\x07\x08\\B\\Z\x07\\A\\w\\W\\s\\S\\d\\D'
 
+    >>> re2.set_fallback_notification(re2.FALLBACK_QUIETLY)

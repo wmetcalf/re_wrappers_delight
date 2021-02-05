@@ -2,15 +2,13 @@ install:
 	python3 setup.py install --user
 
 test: install
-	(cd tests && python3 re2_test.py)
-	(cd tests && python3 test_re.py)
+	pytest --doctest-glob='*.txt'
 
 install2:
 	python2 setup.py install --user
 
 test2: install2
-	(cd tests && python2 re2_test.py)
-	(cd tests && python2 test_re.py)
+	python2 -m pytest --doctest-glob='*.txt'
 
 clean:
 	rm -rf build &>/dev/null
