@@ -1,16 +1,16 @@
 install:
-	python setup.py install --user
-
-test: install
-	(cd tests && python re2_test.py)
-	(cd tests && python test_re.py)
-
-install3:
 	python3 setup.py install --user
 
-test3: install3
+test: install
 	(cd tests && python3 re2_test.py)
 	(cd tests && python3 test_re.py)
+
+install2:
+	python2 setup.py install --user
+
+test2: install2
+	(cd tests && python2 re2_test.py)
+	(cd tests && python2 test_re.py)
 
 clean:
 	rm -rf build &>/dev/null
