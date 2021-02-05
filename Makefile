@@ -1,12 +1,12 @@
 install:
-	python setup.py install --user --cython
+	python setup.py install --user
 
 test: install
 	(cd tests && python re2_test.py)
 	(cd tests && python test_re.py)
 
 install3:
-	python3 setup.py install --user --cython
+	python3 setup.py install --user
 
 test3: install3
 	(cd tests && python3 re2_test.py)
@@ -19,13 +19,13 @@ clean:
 	rm -rf src/re2.cpp &>/dev/null
 
 valgrind:
-	python3.5-dbg setup.py install --user --cython && \
+	python3.5-dbg setup.py install --user && \
 	(cd tests && valgrind --tool=memcheck --suppressions=../valgrind-python.supp \
 	--leak-check=full --show-leak-kinds=definite \
 	python3.5-dbg test_re.py)
 
 valgrind2:
-	python3.5-dbg setup.py install --user --cython && \
+	python3.5-dbg setup.py install --user && \
 	(cd tests && valgrind --tool=memcheck --suppressions=../valgrind-python.supp \
 	--leak-check=full --show-leak-kinds=definite \
 	python3.5-dbg re2_test.py)

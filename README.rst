@@ -86,8 +86,7 @@ Requirements for building the C++ extension from the repo source:
 * Build tools and libraries: RE2, pybind11, and cmake installed in the build
   environment.
 
-  + On Ubuntu/Debian, install cmake, pybind11-dev, and libre2-dev packages
-    (also install Python development headers if needed, e.g. ``sudo apt-get install python-dev``)
+  + On Ubuntu/Debian: ``sudo apt-get install build-essential cmake ninja-build python3-dev cython3 pybind11-dev libre2-dev``
   + On Gentoo, install dev-util/cmake, dev-python/pybind11, and dev-libs/re2
   + For a venv you can install the pybind11, cmake, and cython packages from PyPI
 
@@ -101,15 +100,9 @@ On Windows use the ``vcpkg`` package manager::
 
 You can pass some cmake environment variables to alter the build type or
 pass a toolchain file (the latter is required on Windows) or specify the
-cmake generator.  For example:
-
-::
+cmake generator.  For example::
 
   $ CMAKE_GENERATOR="Unix Makefiles" CMAKE_TOOLCHAIN_FILE=clang_toolchain.cmake tox -e deploy
-
-After the prerequisites are installed, install as follows::
-
-    $ pip install https://github.com/andreasvc/pyre2/archive/master.zip
 
 For development, get the source::
 
@@ -166,7 +159,7 @@ and ``re.FALLBACK_EXCEPTION`` (raise an exception).
 Documentation
 =============
 
-Consult the docstring in the source code or interactively
+Consult the docstrings in the source code or interactively
 through ipython or ``pydoc re2`` etc.
 
 Unicode Support
