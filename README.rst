@@ -1,6 +1,6 @@
-=====
-pyre2: Python RE2 wrapper for linear-time regular expressions
-=====
+===============================================================
+ pyre2: Python RE2 wrapper for linear-time regular expressions
+===============================================================
 
 .. image:: https://github.com/andreasvc/pyre2/workflows/Build/badge.svg
     :target: https://github.com/andreasvc/pyre2/actions?query=workflow:Build

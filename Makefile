@@ -12,9 +12,7 @@ test2: install2
 
 clean:
 	rm -rf build &>/dev/null
-	rm -rf src/*.so src/*.html &>/dev/null
-	rm -rf re2.so tests/re2.so &>/dev/null
-	rm -rf src/re2.cpp &>/dev/null
+	rm -f *.so src/*.so src/re2.cpp src/*.html &>/dev/null
 
 valgrind:
 	python3.5-dbg setup.py install --user && \
