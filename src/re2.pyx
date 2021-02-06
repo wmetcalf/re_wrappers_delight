@@ -132,6 +132,7 @@ VERSION_HEX = 0x000217
 
 cdef int _I = I, _M = M, _S = S, _U = U, _X = X, _L = L
 cdef int current_notification = FALLBACK_QUIETLY
+cdef bint PY2 = PY_MAJOR_VERSION == 2
 
 # Type of compiled re object from Python stdlib
 SREPattern = type(re.compile(''))

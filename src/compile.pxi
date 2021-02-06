@@ -46,9 +46,9 @@ def _compile(object pattern, int flags=0, int max_mem=8388608):
         if not encoded and flags & _U:  # re.UNICODE
             pass  # can use UNICODE with bytes pattern, but assumes valid UTF-8
             # raise ValueError("can't use UNICODE flag with a bytes pattern")
-        elif encoded and not (flags & re.ASCII):
+        elif encoded and not (flags & ASCII):  # re.ASCII (not in Python 2)
             newflags = flags | _U  # re.UNICODE
-        elif encoded and flags & re.ASCII:
+        elif encoded and flags & ASCII:
             newflags = flags & ~_U  # re.UNICODE
     try:
         pattern = _prepare_pattern(pattern, newflags)

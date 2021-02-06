@@ -30,7 +30,6 @@ set_target_properties(${cython_module}
 target_include_directories(${cython_module} PUBLIC
                            ${PYTHON_INCLUDE_DIRS})
 
-target_compile_definitions(${cython_module} PRIVATE PY2=0)
 target_compile_definitions(${cython_module} PRIVATE VERSION_INFO=${SCM_VERSION_INFO})
 
 # here we get to jump through some hoops to find libre2 on the manylinux
