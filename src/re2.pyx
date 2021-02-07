@@ -388,10 +388,9 @@ cdef utf8indices(char * cstring, int size, int *pos, int *endpos):
         else:
             cpos += 4
             upos += 1
-            # wide unicode chars get 2 unichars when python is compiled
+            # wide unicode chars get 2 unichars when Python <3.3 is compiled
             # with --enable-unicode=ucs2
-            # TODO: verify this; cf. http://docs.cython.org/en/latest/src/tutorial/strings.html#narrow-unicode-builds
-            emit_ifndef_py_unicode_wide()
+            emit_if_narrow_unicode()
             upos += 1
             emit_endif()
 
@@ -436,10 +435,9 @@ cdef void unicodeindices(map[int, int] &positions,
         else:
             cpos[0] += 4
             upos[0] += 1
-            # wide unicode chars get 2 unichars when python is compiled
+            # wide unicode chars get 2 unichars when Python <3.3 is compiled
             # with --enable-unicode=ucs2
-            # TODO: verify this; cf. http://docs.cython.org/en/latest/src/tutorial/strings.html#narrow-unicode-builds
-            emit_ifndef_py_unicode_wide()
+            emit_if_narrow_unicode()
             upos[0] += 1
             emit_endif()
 

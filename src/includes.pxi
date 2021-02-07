@@ -8,7 +8,7 @@ from cpython.version cimport PY_MAJOR_VERSION
 
 
 cdef extern from *:
-    cdef void emit_ifndef_py_unicode_wide "#if !defined(Py_UNICODE_WIDE) //" ()
+    cdef void emit_if_narrow_unicode "#if !defined(Py_UNICODE_WIDE) && PY_VERSION_HEX < 0x03030000 //" ()
     cdef void emit_endif "#endif //" ()
 
 
