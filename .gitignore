@@ -2,12 +2,13 @@ MANIFEST
 /build
 /dist
 .tox/
-src/re2.so
+src/*.so
 src/re2.cpp
 src/*.html
-tests/re2.so
+tests/*.so
 tests/access.log
 *~
+*.so
 *.pyc
 *.swp
 *.egg-info
