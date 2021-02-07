@@ -4,7 +4,7 @@ Simple tests for the ``finditer`` function.
     >>> import re2
     >>> re2.set_fallback_notification(re2.FALLBACK_EXCEPTION)
 
-    >>> with open('tests/cnn_homepage.dat') as tmp:
+    >>> with open('cnn_homepage.dat') as tmp:
     ...     data = tmp.read()
     >>> len(list(re2.finditer(r'\w+', data)))
     14230
