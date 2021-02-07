@@ -36,7 +36,7 @@ test:
   commands:
     - export "PYTHONIOENCODING=utf8"  # [unix]
     - set "PYTHONIOENCODING=utf8"  # [win]
-    - python -m pytest -v --ignore=tests/test_re.py --doctest-glob=*.txt tests/
+    - python -m pytest -v --ignore=tests/test_re.py tests/
     - python -m pytest -v .
   imports:
     - re2

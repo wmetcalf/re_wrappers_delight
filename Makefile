@@ -2,13 +2,13 @@ install:
 	python3 setup.py install --user
 
 test: install
-	pytest --doctest-glob='*.txt'
+	(cd tests; pytest)
 
 install2:
 	python2 setup.py install --user
 
 test2: install2
-	python2 -m pytest --doctest-glob='*.txt'
+	(cd tests; python2 -m pytest)
 
 clean:
 	rm -rf build pyre2.egg-info &>/dev/null

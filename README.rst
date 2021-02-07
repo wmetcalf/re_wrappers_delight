@@ -223,7 +223,7 @@ The tests show the following differences with Python's ``re`` module:
   with ``\n``. This can be simulated using ``\n?$``, except when doing
   substitutions.
 * The ``pyre2`` module and Python's ``re`` may behave differently with nested groups.
-  See ``tests/emptygroups.txt`` for the examples.
+  See ``tests/test_emptygroups.txt`` for the examples.
 
 Please report any further issues with ``pyre2``.
 
@@ -234,9 +234,9 @@ If you would like to help, one thing that would be very useful
 is writing comprehensive tests for this. It's actually really easy:
 
 * Come up with regular expression problems using the regular python 're' module.
-* Write a session in python traceback format `Example <http://github.com/andreasvc/pyre2/blob/master/tests/search.txt>`_.
+* Write a session in python traceback format `Example <http://github.com/andreasvc/pyre2/blob/master/tests/test_search.txt>`_.
 * Replace your ``import re`` with ``import re2 as re``.
-* Save it as a .txt file in the tests directory. You can comment on it however you like and indent the code with 4 spaces.
+* Save it with as ``test_<name>.txt`` in the tests directory. You can comment on it however you like and indent the code with 4 spaces.
 
 
 Credits
