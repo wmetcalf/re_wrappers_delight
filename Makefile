@@ -11,8 +11,11 @@ test2: install2
 	python2 -m pytest --doctest-glob='*.txt'
 
 clean:
-	rm -rf build &>/dev/null
+	rm -rf build pyre2.egg-info &>/dev/null
 	rm -f *.so src/*.so src/re2.cpp src/*.html &>/dev/null
+
+distclean: clean
+	rm -rf .tox/ dist/ .pytest_cache/
 
 valgrind:
 	python3.5-dbg setup.py install --user && \
