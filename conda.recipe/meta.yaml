@@ -7,6 +7,8 @@ package:
 
 source:
   path: ..
+  patches:
+    - adjust-test-file-paths.patch
 
 build:
   number: 0
@@ -29,14 +31,17 @@ requirements:
     - re2
 
 test:
+  requires:
+    - pytest
   commands:
     - export "PYTHONIOENCODING=utf8"  # [unix]
     - set "PYTHONIOENCODING=utf8"  # [win]
-    - python -m unittest discover -f -s tests
+    - python -m pytest -v --ignore=tests/test_re.py --doctest-glob=*.txt tests/
+    - python -m pytest -v .
   imports:
     - re2
   source_files:
-    - tests
+    - tests/
 
 about:
   home: "https://github.com/andreasvc/pyre2"

@@ -61,10 +61,10 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.sub('(.)', re.escape(s), 'x'), s)
         self.assertEqual(re.sub('(.)', lambda m: s, 'x'), s)
 
-        self.assertEqual(re.sub('(?P<a>x)', '\g<a>\g<a>', 'xx'), 'xxxx')
-        self.assertEqual(re.sub('(?P<a>x)', '\g<a>\g<1>', 'xx'), 'xxxx')
-        self.assertEqual(re.sub('(?P<unk>x)', '\g<unk>\g<unk>', 'xx'), 'xxxx')
-        self.assertEqual(re.sub('(?P<unk>x)', '\g<1>\g<1>', 'xx'), 'xxxx')
+        self.assertEqual(re.sub('(?P<a>x)', r'\g<a>\g<a>', 'xx'), 'xxxx')
+        self.assertEqual(re.sub('(?P<a>x)', r'\g<a>\g<1>', 'xx'), 'xxxx')
+        self.assertEqual(re.sub('(?P<unk>x)', r'\g<unk>\g<unk>', 'xx'), 'xxxx')
+        self.assertEqual(re.sub('(?P<unk>x)', r'\g<1>\g<1>', 'xx'), 'xxxx')
 
         self.assertEqual(re.sub('a',r'\t\n\v\r\f\a\b\B\Z\a\A\w\W\s\S\d\D','a'),
                          '\t\n\v\r\f\a\b\\B\\Z\a\\A\\w\\W\\s\\S\\d\\D')
@@ -72,12 +72,12 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.sub('a', '\t\n\v\r\f\a', 'a'),
                          (chr(9)+chr(10)+chr(11)+chr(13)+chr(12)+chr(7)))
 
-        self.assertEqual(re.sub('^\s*', 'X', 'test'), 'Xtest')
+        self.assertEqual(re.sub(r'^\s*', 'X', 'test'), 'Xtest')
 
     def test_bug_449964(self):
         # fails for group followed by other escape
         self.assertEqual(
-                re.sub(r'(?P<unk>x)', '\g<1>\g<1>\\b', 'xx'), 'xx\bxx\b')
+                re.sub(r'(?P<unk>x)', '\\g<1>\\g<1>\\b', 'xx'), 'xx\bxx\b')
 
     def test_bug_449000(self):
         # Test for sub() on escaped characters
@@ -125,7 +125,7 @@ class ReTests(unittest.TestCase):
 
     def test_bug_3629(self):
         # A regex that triggered a bug in the sre-code validator
-        re.compile("(?P<quote>)(?(quote))")
+        re.compile('(?P<quote>)(?(quote))')
 
     def test_sub_template_numeric_escape(self):
         # bug 776311 and friends
@@ -183,16 +183,16 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.sub('x+', '-', 'abxd'), 'ab-d')
 
     def test_symbolic_refs(self):
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<a', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<a a>', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<1a1>', 'xx')
-        self.assertRaises(IndexError, re.sub, '(?P<a>x)', '\g<ab>', 'xx')
+        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<a', 'xx')
+        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<', 'xx')
+        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g', 'xx')
+        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<a a>', 'xx')
+        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<1a1>', 'xx')
+        self.assertRaises(IndexError, re.sub, '(?P<a>x)', r'\g<ab>', 'xx')
         # non-matched groups no longer raise an error:
         # self.assertRaises(re.error, re.sub, '(?P<a>x)|(?P<b>y)', '\g<b>', 'xx')
         # self.assertRaises(re.error, re.sub, '(?P<a>x)|(?P<b>y)', '\\2', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<-1>', 'xx')
+        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<-1>', 'xx')
 
     def test_re_subn(self):
         self.assertEqual(re.subn("(?i)b+", "x", "bbbb BBBB"), ('x x', 2))
@@ -265,12 +265,12 @@ class ReTests(unittest.TestCase):
         self.assertEqual(pat.match('ac').group(1, 'b2', 3), ('a', None, 'c'))
 
     def test_re_groupref_exists(self):
-        self.assertEqual(re.match('^(\()?([^()]+)(?(1)\))$', '(a)').groups(),
+        self.assertEqual(re.match(r'^(\()?([^()]+)(?(1)\))$', '(a)').groups(),
                          ('(', 'a'))
-        self.assertEqual(re.match('^(\()?([^()]+)(?(1)\))$', 'a').groups(),
+        self.assertEqual(re.match(r'^(\()?([^()]+)(?(1)\))$', 'a').groups(),
                          (None, 'a'))
-        self.assertEqual(re.match('^(\()?([^()]+)(?(1)\))$', 'a)'), None)
-        self.assertEqual(re.match('^(\()?([^()]+)(?(1)\))$', '(a'), None)
+        self.assertEqual(re.match(r'^(\()?([^()]+)(?(1)\))$', 'a)'), None)
+        self.assertEqual(re.match(r'^(\()?([^()]+)(?(1)\))$', '(a'), None)
         self.assertEqual(re.match('^(?:(a)|c)((?(1)b|d))$', 'ab').groups(),
                          ('a', 'b'))
         self.assertEqual(re.match('^(?:(a)|c)((?(1)b|d))$', 'cd').groups(),
@@ -313,19 +313,19 @@ class ReTests(unittest.TestCase):
                          "second first second first")
 
     def test_repeat_minmax(self):
-        self.assertEqual(re.match("^(\w){1}$", "abc"), None)
-        self.assertEqual(re.match("^(\w){1}?$", "abc"), None)
-        self.assertEqual(re.match("^(\w){1,2}$", "abc"), None)
-        self.assertEqual(re.match("^(\w){1,2}?$", "abc"), None)
+        self.assertEqual(re.match(r"^(\w){1}$", "abc"), None)
+        self.assertEqual(re.match(r"^(\w){1}?$", "abc"), None)
+        self.assertEqual(re.match(r"^(\w){1,2}$", "abc"), None)
+        self.assertEqual(re.match(r"^(\w){1,2}?$", "abc"), None)
 
-        self.assertEqual(re.match("^(\w){3}$", "abc").group(1), "c")
-        self.assertEqual(re.match("^(\w){1,3}$", "abc").group(1), "c")
-        self.assertEqual(re.match("^(\w){1,4}$", "abc").group(1), "c")
-        self.assertEqual(re.match("^(\w){3,4}?$", "abc").group(1), "c")
-        self.assertEqual(re.match("^(\w){3}?$", "abc").group(1), "c")
-        self.assertEqual(re.match("^(\w){1,3}?$", "abc").group(1), "c")
-        self.assertEqual(re.match("^(\w){1,4}?$", "abc").group(1), "c")
-        self.assertEqual(re.match("^(\w){3,4}?$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){3}$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){1,3}$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){1,4}$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){3,4}?$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){3}?$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){1,3}?$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){1,4}?$", "abc").group(1), "c")
+        self.assertEqual(re.match(r"^(\w){3,4}?$", "abc").group(1), "c")
 
         self.assertEqual(re.match("^x{1}$", "xxx"), None)
         self.assertEqual(re.match("^x{1}?$", "xxx"), None)
@@ -386,10 +386,10 @@ class ReTests(unittest.TestCase):
                          "a\n\nb")
 
     def test_non_consuming(self):
-        self.assertEqual(re.match("(a(?=\s[^a]))", "a b").group(1), "a")
-        self.assertEqual(re.match("(a(?=\s[^a]*))", "a b").group(1), "a")
-        self.assertEqual(re.match("(a(?=\s[abc]))", "a b").group(1), "a")
-        self.assertEqual(re.match("(a(?=\s[abc]*))", "a bc").group(1), "a")
+        self.assertEqual(re.match(r"(a(?=\s[^a]))", "a b").group(1), "a")
+        self.assertEqual(re.match(r"(a(?=\s[^a]*))", "a b").group(1), "a")
+        self.assertEqual(re.match(r"(a(?=\s[abc]))", "a b").group(1), "a")
+        self.assertEqual(re.match(r"(a(?=\s[abc]*))", "a bc").group(1), "a")
         self.assertEqual(re.match(r"(a)(?=\s\1)", "a a").group(1), "a")
         self.assertEqual(re.match(r"(a)(?=\s\1*)", "a aa").group(1), "a")
         self.assertEqual(re.match(r"(a)(?=\s(abc|a))", "a a").group(1), "a")
@@ -419,12 +419,12 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.match("abc", u"ABC", re.I).group(0), "ABC")
 
     def test_not_literal(self):
-        self.assertEqual(re.search("\s([^a])", " b").group(1), "b")
-        self.assertEqual(re.search("\s([^a]*)", " bb").group(1), "bb")
+        self.assertEqual(re.search(r"\s([^a])", " b").group(1), "b")
+        self.assertEqual(re.search(r"\s([^a]*)", " bb").group(1), "bb")
 
     def test_search_coverage(self):
-        self.assertEqual(re.search("\s(b)", " b").group(1), "b")
-        self.assertEqual(re.search("a\s", "a ").group(0), "a ")
+        self.assertEqual(re.search(r"\s(b)", " b").group(1), "b")
+        self.assertEqual(re.search(r"a\s", "a ").group(0), "a ")
 
     def test_re_escape(self):
         p = ""
@@ -476,7 +476,7 @@ class ReTests(unittest.TestCase):
             self.assertNotEqual(re.match(r"\x%02x" % i, chr(i)), None)
             self.assertNotEqual(re.match(r"\x%02x0" % i, chr(i)+"0"), None)
             self.assertNotEqual(re.match(r"\x%02xz" % i, chr(i)+"z"), None)
-        self.assertRaises(re.error, re.match, b"\911", b"")
+        self.assertRaises(re.error, re.match, b"\\911", b"")
 
     def test_sre_character_class_literals(self):
         for i in [0, 8, 16, 32, 64, 127, 128, 255]:
@@ -486,7 +486,7 @@ class ReTests(unittest.TestCase):
             self.assertNotEqual(re.match(r"[\x%02x]" % i, chr(i)), None)
             self.assertNotEqual(re.match(r"[\x%02x0]" % i, chr(i)), None)
             self.assertNotEqual(re.match(r"[\x%02xz]" % i, chr(i)), None)
-        self.assertRaises(re.error, re.match, b"[\911]", b"")
+        self.assertRaises(re.error, re.match, b"[\\911]", b"")
 
     def test_bug_113254(self):
         self.assertEqual(re.match(r'(a)|(b)', 'b').start(1), -1)
@@ -686,14 +686,14 @@ class ReTests(unittest.TestCase):
         self.assertRaises(TypeError, re.finditer, "a", {})
 
 
-def run_re_tests():
+def test_re_suite():
     try:
-        from tests.re_tests import benchmarks, tests, SUCCEED, FAIL, SYNTAX_ERROR
+        from tests.re_utils import benchmarks, tests, SUCCEED, FAIL, SYNTAX_ERROR
     except ImportError:
-        from re_tests import benchmarks, tests, SUCCEED, FAIL, SYNTAX_ERROR
+        from re_utils import benchmarks, tests, SUCCEED, FAIL, SYNTAX_ERROR
 
     if verbose:
-        print('\nRunning re_tests test suite')
+        print('\nRunning test_re_suite ...')
     else:
         # To save time, only run the first and last 10 tests
         #tests = tests[:10] + tests[-10:]
@@ -807,7 +807,3 @@ def run_re_tests():
                 result = obj.search(s)
                 if result is None:
                     print('=== Fails on unicode-sensitive match', t)
-
-
-if __name__ == "__main__":
-    unittest.main()

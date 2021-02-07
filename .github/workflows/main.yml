@@ -75,8 +75,8 @@ jobs:
 
       - name: Build sdist
         run: |
-          pip install --user cython
-          python setup.py sdist
+          pip install pep517
+          python -m pep517.build -s .
 
       - uses: actions/upload-artifact@v2
         with:
