@@ -1,52 +1,52 @@
-diff --git a/tests/finditer.txt b/tests/finditer.txt
+diff --git a/tests/test_finditer.txt b/tests/test_finditer.txt
 index 52934c4..3d60d19 100644
---- a/tests/finditer.txt
-+++ b/tests/finditer.txt
+--- a/tests/test_finditer.txt
++++ b/tests/test_finditer.txt
 @@ -4,7 +4,7 @@ Simple tests for the ``finditer`` function.
      >>> import re2
      >>> re2.set_fallback_notification(re2.FALLBACK_EXCEPTION)
  
 -    >>> with open('cnn_homepage.dat') as tmp:
-+    >>> with open('tests/cnn_homepage.dat') as tmp:
++    >>> with open('tests/test_cnn_homepage.dat') as tmp:
      ...     data = tmp.read()
      >>> len(list(re2.finditer(r'\w+', data)))
      14230
-diff --git a/tests/mmap.txt b/tests/mmap.txt
+diff --git a/tests/test_mmap.txt b/tests/test_mmap.txt
 index 0753441..12ffa97 100644
---- a/tests/mmap.txt
-+++ b/tests/mmap.txt
+--- a/tests/test_mmap.txt
++++ b/tests/test_mmap.txt
 @@ -6,7 +6,7 @@ Testing re2 on buffer object
      >>> import mmap
      >>> re2.set_fallback_notification(re2.FALLBACK_EXCEPTION)
  
 -    >>> tmp = open("cnn_homepage.dat", "rb+")
-+    >>> tmp = open("tests/cnn_homepage.dat", "rb+")
++    >>> tmp = open("tests/test_cnn_homepage.dat", "rb+")
      >>> data = mmap.mmap(tmp.fileno(), 0)
  
      >>> len(list(re2.finditer(b'\\w+', data)))
-diff --git a/tests/search.txt b/tests/search.txt
+diff --git a/tests/test_search.txt b/tests/test_search.txt
 index 7d64869..9c1e18f 100644
---- a/tests/search.txt
-+++ b/tests/search.txt
+--- a/tests/test_search.txt
++++ b/tests/test_search.txt
 @@ -16,7 +16,7 @@ These are simple tests of the ``search`` function
      >>> len(re2.search('(?:a{1000})?a{999}', input).group())
      999
  
 -    >>> with open('cnn_homepage.dat') as tmp:
-+    >>> with open('tests/cnn_homepage.dat') as tmp:
++    >>> with open('tests/test_cnn_homepage.dat') as tmp:
      ...     data = tmp.read()
      >>> re2.search(r'\n#hdr-editions(.*?)\n', data).groups()
      (' a { text-decoration:none; }',)
-diff --git a/tests/sub.txt b/tests/sub.txt
+diff --git a/tests/test_sub.txt b/tests/test_sub.txt
 index 3c74450..cca1f0b 100644
---- a/tests/sub.txt
-+++ b/tests/sub.txt
+--- a/tests/test_sub.txt
++++ b/tests/test_sub.txt
 @@ -12,7 +12,7 @@ with an empty string.
      >>> import warnings
      >>> warnings.filterwarnings('ignore', category=DeprecationWarning)
  
 -    >>> with gzip.open('wikipages.xml.gz', 'rb') as tmp:
-+    >>> with gzip.open('tests/wikipages.xml.gz', 'rb') as tmp:
++    >>> with gzip.open('tests/test_wikipages.xml.gz', 'rb') as tmp:
      ...     data = tmp.read()
      >>> print(hashlib.md5(re2.sub(b'\(.*?\)', b'', data)).hexdigest())
      b7a469f55ab76cd5887c81dbb0cfe6d3
