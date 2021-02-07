@@ -33,7 +33,7 @@ index 7d64869..9c1e18f 100644
      999
  
 -    >>> with open('cnn_homepage.dat') as tmp:
-+    >>> with open('tests/test_cnn_homepage.dat') as tmp:
++    >>> with open('tests/cnn_homepage.dat') as tmp:
      ...     data = tmp.read()
      >>> re2.search(r'\n#hdr-editions(.*?)\n', data).groups()
      (' a { text-decoration:none; }',)
