@@ -7,8 +7,6 @@ package:
 
 source:
   path: ..
-  patches:
-    - adjust-test-file-paths.patch
 
 build:
   number: 0
@@ -36,7 +34,6 @@ test:
   commands:
     - export "PYTHONIOENCODING=utf8"  # [unix]
     - set "PYTHONIOENCODING=utf8"  # [win]
-    - python -m pytest -v --ignore=tests/test_re.py tests/
     - python -m pytest -v .
   imports:
     - re2
