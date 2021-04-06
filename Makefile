@@ -2,13 +2,13 @@ install:
 	python3 setup.py install --user
 
 test: install
-	(cd tests; pytest)
+	pytest
 
 install2:
 	python2 setup.py install --user
 
 test2: install2
-	(cd tests; python2 -m pytest)
+	python2 -m pytest
 
 clean:
 	rm -rf build pyre2.egg-info &>/dev/null
