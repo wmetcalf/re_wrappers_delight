@@ -459,7 +459,7 @@ cdef class Pattern:
         cdef Py_ssize_t size
         cdef Py_buffer buf
         cdef int retval
-        cdef int prevendpos = 0
+        cdef int prevendpos = -1
         cdef int endpos = 0
         cdef int pos = 0
         cdef int encoded = 0
@@ -490,11 +490,12 @@ cdef class Pattern:
                 if retval == 0:
                     break
 
-                prevendpos = endpos
                 endpos = m.matches[0].data() - cstring
-                # ignore empty match on latest position
-                if pos == endpos == prevendpos and num_repl[0] > 1:
-                    break
+                if endpos == prevendpos:
+                    endpos += 1
+                    if endpos > size:
+                        break
+                prevendpos = endpos
                 result.extend(sp.data()[pos:endpos])
                 pos = endpos + m.matches[0].length()
 
@@ -524,7 +525,7 @@ cdef class Pattern:
         cdef Py_ssize_t size
         cdef Py_buffer buf
         cdef int retval
-        cdef int prevendpos = 0
+        cdef int prevendpos = -1
         cdef int endpos = 0
         cdef int pos = 0
         cdef int encoded = 0
@@ -554,11 +555,12 @@ cdef class Pattern:
                 if retval == 0:
                     break
 
-                prevendpos = endpos
                 endpos = m.matches[0].data() - cstring
-                # ignore empty match on latest position
-                if pos == endpos == prevendpos and num_repl[0] > 1:
-                    break
+                if endpos == prevendpos:
+                    endpos += 1
+                    if endpos > size:
+                        break
+                prevendpos = endpos
                 result.extend(sp.data()[pos:endpos])
                 pos = endpos + m.matches[0].length()
 

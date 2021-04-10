@@ -23,3 +23,9 @@ Issue #26 re2.sub replacements with a match of "(.*)" hangs forever
 
    >>> re2.sub('(.*)', r'\1;replacement', 'original')
    'original;replacement;replacement'
+
+   >>> re2.sub('(.*)', lambda x: x.group() + ';replacement', 'original')
+   'original;replacement;replacement'
+
+   >>> re2.subn("b*", lambda x: "X", "xyz", 4)
+   ('XxXyXzX', 4)
