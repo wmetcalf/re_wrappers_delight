@@ -59,11 +59,30 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: cibw-wheels
           path: ./wheelhouse/*.whl
 
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.8'
+
+      - name: Build sdist
+        run: |
+          pip install pep517
+          python -m pep517.build -s .
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.tar.gz
+
   create_release:
-    needs: [cibw_wheels]
+    needs: [build_sdist, cibw_wheels]
     runs-on: ubuntu-20.04
 
     steps:
@@ -84,8 +103,6 @@ jobs:
 
       # download all artifacts to project dir
       - uses: actions/download-artifact@v2
-        with:
-          path: dist
 
       - name: Generate changes file
         uses: sarnold/gitchangelog-action@master
@@ -99,7 +116,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.VERSION }}
-          name: Release v${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
           body_path: CHANGES.md
           draft: false
           prerelease: false
@@ -110,4 +127,4 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
-          packages_dir: dist/cibw-wheels/
+          packages_dir: artifact/
