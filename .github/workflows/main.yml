@@ -82,3 +82,17 @@ jobs:
         with:
           path: dist/*.tar.gz
 
+  check_artifacts:
+    needs: [build_sdist, build_wheels]
+    defaults:
+      run:
+        shell: bash
+    name: Check artifacts are correct
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+
+      # note wheels should be in subdirectory <upload_name>
+      - name: Check number of downloaded artifacts
+        run: ls -R
