@@ -101,6 +101,9 @@ cdef class Match:
             return None if result is None else result.decode('utf8')
         return self._group(groupnum)
 
+    def __getitem__(self, key):
+        return self.group(key)
+
     def groupdict(self):
         result = self._groupdict()
         if self.encoded:
