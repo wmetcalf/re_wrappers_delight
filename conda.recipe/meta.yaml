@@ -7,6 +7,8 @@ package:
 
 source:
   path: ..
+  patches:
+    - conda-test_emptygroups.patch
 
 build:
   number: 0
