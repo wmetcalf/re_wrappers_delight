@@ -124,6 +124,7 @@ jobs:
           files: dist/cibw-wheels/pyre2*.whl
 
       - uses: pypa/gh-action-pypi-publish@master
+        if: ${{ github.actor == github.repository_owner && github.ref == 'refs/heads/master' }}
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
