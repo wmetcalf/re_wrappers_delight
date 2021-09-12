@@ -23,14 +23,16 @@ Unused vs. empty group:
 
 The following show different behavior for re and re2:
 
-    >>> re.search(r'((.*)*.)', 'a').groups()
-    ('a', '')
-    >>> re2.search(r'((.*)*.)', 'a').groups()
-    ('a', None)
-
     >>> re.search(r'((.*)*.)', 'Hello').groups()
     ('Hello', '')
     >>> re2.search(r'((.*)*.)', 'Hello').groups()
     ('Hello', 'Hell')
+
+This one was formerly a None vs empty string difference until July 2021:
+
+    >>> re.search(r'((.*)*.)', 'a').groups()
+    ('a', '')
+    >>> re2.search(r'((.*)*.)', 'a').groups()
+    ('a', '')
 
     >>> re2.set_fallback_notification(re2.FALLBACK_QUIETLY)
