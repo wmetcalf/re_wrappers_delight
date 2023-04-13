@@ -124,11 +124,9 @@ DEBUG = re.DEBUG
 NOFLAG = 0  # Python 3.11
 ASCII = 256  # Python 3
 
-try:
+if sys.version_info[:2] >= (3, 11):
     import enum
-except ImportError:
-    pass
-else:
+
     @enum.global_enum
     @enum._simple_enum(enum.IntFlag, boundary=enum.KEEP)
     class RegexFlag:
@@ -140,8 +138,6 @@ else:
         MULTILINE = M = re.MULTILINE # make anchors look for newline
         DOTALL = S = re.DOTALL # make dot match newline
         VERBOSE = X = re.VERBOSE # ignore whitespace and comments
-        # sre extensions (experimental, don't rely on these
-        # TEMPLATE = T = _compiler.SRE_FLAG_TEMPLATE # unknown purpose, deprecated
         DEBUG = re.DEBUG # dump pattern after compilation
         __str__ = object.__str__
         _numeric_repr_ = hex
