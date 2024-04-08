@@ -1,7 +1,6 @@
 [build-system]
 requires = [
     "setuptools>=42",
-    "wheel",
     "Cython>=0.20",
     "pybind11>=2.6.0",
     "ninja; sys_platform != 'Windows'",

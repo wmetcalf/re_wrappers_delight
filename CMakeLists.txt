@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...3.18)
+cmake_minimum_required(VERSION 3.15...3.28)
 
 project(re2 LANGUAGES CXX C)
 
@@ -9,8 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-  set(CLANG_DEFAULT_CXX_STDLIB libc++)
-  set(CLANG_DEFAULT_RTLIB compiler-rt)
+    set(CLANG_DEFAULT_CXX_STDLIB libc++)
+    set(CLANG_DEFAULT_RTLIB compiler-rt)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -20,27 +20,30 @@ endif()
 
 include(GNUInstallDirs)
 
+# get rid of FindPython old warnings, refactor FindCython module
+set(CMP0148 NEW)
+
 find_package(pybind11 CONFIG)
 
 if(pybind11_FOUND)
-  message(STATUS "System pybind11 found")
+    message(STATUS "System pybind11 found")
 else()
-  message(STATUS "Fetching pybind11 from github")
-  # Fetch pybind11
-  include(FetchContent)
+    message(STATUS "Fetching pybind11 from github")
+    # Fetch pybind11
+    include(FetchContent)
 
-  FetchContent_Declare(
-    pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG v2.6.1
-  )
-  FetchContent_MakeAvailable(pybind11)
+    FetchContent_Declare(
+      pybind11
+      GIT_REPOSITORY https://github.com/pybind/pybind11
+      GIT_TAG v2.12.0
+    )
+    FetchContent_MakeAvailable(pybind11)
 endif()
 
 find_package(Threads REQUIRED)
 
 if (${PYTHON_IS_DEBUG})
-  set(PY_DEBUG ON)
+    set(PY_DEBUG ON)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
