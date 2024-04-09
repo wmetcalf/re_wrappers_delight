@@ -254,11 +254,10 @@ class ReTests(unittest.TestCase):
         # A single group
         m = re.match('(a)', 'a')
         self.assertEqual(m.group(0), 'a')
-        self.assertEqual(m.group(0), 'a')
         self.assertEqual(m.group(1), 'a')
+        self.assertEqual(m.group(0, 0), ('a', 'a'))
         self.assertEqual(m.group(1, 1), ('a', 'a'))
-        self.assertEqual(m[0], 'a')
-        self.assertEqual(m[1], 'a')
+        self.assertEqual(m.groups(), ('a',))
 
         pat = re.compile('(?:(?P<a1>a)|(?P<b2>b))(?P<c3>c)?')
         self.assertEqual(pat.match('a').group(1, 2, 3), ('a', None, None))
