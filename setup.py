@@ -128,5 +128,5 @@ class CMakeBuild(build_ext):
 setup(
     ext_modules=[CMakeExtension('re2')],
     cmdclass={'build_ext': CMakeBuild},
-    zip_safe=False,
+    package_dir={'': 'src'},
 )
