@@ -12,7 +12,7 @@ file(GLOB cy_srcs *.pyx *.pxi *.h)
 
 # .pyx -> .cpp
 add_custom_command(OUTPUT ${cython_output}
-                   COMMAND ${CYTHON_EXECUTABLE}
+                   COMMAND ${Cython_EXECUTABLE}
                            -a -3
                            --fast-fail
                            --cplus -I ${re2_include_dir}

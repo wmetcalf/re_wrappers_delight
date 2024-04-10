@@ -21,7 +21,7 @@ endif()
 include(GNUInstallDirs)
 
 # get rid of FindPython old warnings, refactor FindCython module
-set(CMP0148 NEW)
+#set(CMP0148 NEW)
 
 find_package(pybind11 CONFIG)
 
