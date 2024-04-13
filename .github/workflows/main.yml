@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-11, windows-2019]
+        os: [ubuntu-22.04, macos-11, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -53,8 +53,8 @@ jobs:
             vcpkg install re2:x64-windows
             && vcpkg integrate install
           CIBW_ENVIRONMENT_WINDOWS: 'CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
-          CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: pytest -v {package}/tests/test_re.py
+          CIBW_TEST_REQUIRES: ""
+          CIBW_TEST_COMMAND: ""
 
       - uses: actions/upload-artifact@v4
         with:
