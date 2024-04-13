@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-11, windows-latest]
+        os: [ubuntu-20.04, macos-11, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
         env:
           # configure cibuildwheel to build native archs ('auto'), and some
           # emulated ones, plus cross-compile on macos
-          CIBW_ARCHS_LINUX: auto aarch64
+          CIBW_ARCHS_LINUX: auto
           CIBW_ARCHS_MACOS: auto arm64
           CIBW_TEST_SKIP: "*_arm64 *universal2:arm64 *linux_i686"
           CIBW_ARCHS_WINDOWS: auto64
@@ -48,7 +48,7 @@ jobs:
             yum -y install epel-release && yum install -y re2-devel ninja-build
           CIBW_BEFORE_ALL_MACOS: >
             brew install re2 pybind11
-          #CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.14
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.9
           CIBW_BEFORE_ALL_WINDOWS: >
             vcpkg install re2:x64-windows
             && vcpkg integrate install
@@ -58,6 +58,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
