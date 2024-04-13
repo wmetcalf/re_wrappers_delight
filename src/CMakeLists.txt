@@ -29,12 +29,14 @@ target_compile_definitions(
 
 # here we get to jump through some hoops to find libre2 on the manylinux
 # docker CI images, etc
-find_package(re2 CONFIG NAMES re2)
+if(NOT MSVC)
+  find_package(re2 CONFIG NAMES re2)
+endif()
 
 if(re2_FOUND)
   message(STATUS "System re2 found")
   target_link_libraries(${cython_module} PRIVATE re2::re2)
-elseif(NOT MSVC)
+else()
   message(STATUS "Trying PkgConfig")
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(RE2 IMPORTED_TARGET re2)
