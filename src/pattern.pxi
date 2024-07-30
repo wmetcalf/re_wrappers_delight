@@ -600,11 +600,12 @@ cdef class Pattern:
         del self.re_pattern
 
 
-class PythonRePattern:
+class PythonRegexPattern:
     """A wrapper for re.Pattern to support the extra methods defined by re2
     (contains, count)."""
     def __init__(self, pattern, flags=None):
         self._pattern = re.compile(pattern, flags)
+        print(f"Type of self._pattern: {type(self._pattern)}")
         self.pattern = pattern
         self.flags = flags
         self.groupindex = self._pattern.groupindex

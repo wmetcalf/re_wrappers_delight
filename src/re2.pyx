@@ -105,7 +105,8 @@ alias 'error').
 
 include "includes.pxi"
 
-import re
+import regex as re
+
 import sys
 import warnings
 from re import error as RegexError
