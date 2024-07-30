@@ -605,7 +605,7 @@ class PythonRegexPattern:
     (contains, count)."""
     def __init__(self, pattern, flags=None):
         self._pattern = re.compile(pattern, flags)
-        print(f"Type of self._pattern: {type(self._pattern)}")
+        #print(f"Type of self._pattern: {type(self._pattern)}")
         self.pattern = pattern
         self.flags = flags
         self.groupindex = self._pattern.groupindex
