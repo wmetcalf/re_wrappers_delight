@@ -58,14 +58,10 @@ deterministic finite automata, which guarantees linear-time behavior.
 
 Intended as a drop-in replacement for ``re``. Unicode is supported by encoding
 to UTF-8, and bytes strings are treated as UTF-8 when the UNICODE flag is given.
-For best performance, work with UTF-8 encoded bytes strings.
+For best performance, work with UTF-8 encoded bytes strings. BUT WITH REGEX MODULE fallback
 
 Installation
 ============
-
-Normal usage for Linux/Mac/Windows::
-
-  $ pip install pyre2
 
 Compiling from source
 ---------------------
@@ -95,21 +91,39 @@ cmake generator.  For example::
   $ CMAKE_GENERATOR="Unix Makefiles" CMAKE_TOOLCHAIN_FILE=clang_toolchain.cmake tox -e deploy
 
 For development, get the source::
+    pip install regex
+    git clone https://github.com/wmetcalf/re_wrappers_delight.git
+    cd re_wrappers_delight
+    make install
 
-    $ git clone git://github.com/andreasvc/pyre2.git
-    $ cd pyre2
-    $ make install
+If you are already running pyre2 with python re as the fallback::
 
+    pip uninstall pyre2
+    pip install regex
+    pip install "pyre2 @ git+https://github.com/wmetcalf/re_wrappers_delight.git"
 
-Platform-agnostic building with conda
--------------------------------------
+Test program for fallback::
 
-An alternative to the above is provided via the `conda`_ recipe (use the
-`miniconda installer`_ if you don't have ``conda`` installed already).
+    try:
+        import re2 as re
+    except ImportError:
+        import re
+    
+    m=re.compile('poop(?!ship)')
+    m.search('poopdog')
+    type(m)
 
-
-.. _conda: https://anaconda.org/conda-forge/pyre2
-.. _miniconda installer: https://docs.conda.io/en/latest/miniconda.html
+Output should look something like::
+    >>> try:
+    ...    import re2 as re
+    ... except ImportError:
+    ...    import re
+    ...     
+    >>> m=re.compile('poop(?!ship)')
+    >>> m.search('poopdog')
+    <regex.Match object; span=(0, 4), match='poop'>
+    >>> type(m)
+    <class 're2.PythonRegexPattern'>
 
 
 Backwards Compatibility
