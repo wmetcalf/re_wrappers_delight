@@ -91,6 +91,7 @@ cmake generator.  For example::
   $ CMAKE_GENERATOR="Unix Makefiles" CMAKE_TOOLCHAIN_FILE=clang_toolchain.cmake tox -e deploy
 
 For development, get the source::
+
     pip install regex
     git clone https://github.com/wmetcalf/re_wrappers_delight.git
     cd re_wrappers_delight
