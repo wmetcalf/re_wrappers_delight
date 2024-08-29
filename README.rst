@@ -100,7 +100,6 @@ For development, get the source::
 If you are already running pyre2 with python re as the fallback::
 
     pip uninstall pyre2
-    pip install regex
     pip install "pyre2 @ git+https://github.com/wmetcalf/re_wrappers_delight.git"
 
 Test program for fallback::
