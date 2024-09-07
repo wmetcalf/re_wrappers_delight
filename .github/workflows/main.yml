@@ -13,7 +13,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-latest, macos-13]
+        include:
+        - os: "ubuntu-22.04"
+          arch: "x86_64"
+        - os: "ubuntu-22.04"
+          arch: "aarch64"
+        - os: "macos-13"
+          arch: "x86_64"
+          macosx_deployment_target: "13.0"
+        - os: "macos-14"
+          arch: "arm64"
+          macosx_deployment_target: "14.0"
+        - os: "windows-latest"
+          arch: "auto64"
+          triplet: "x64-windows"
+        - os: "windows-latest"
+          arch: "auto32"
+          triplet: "x86-windows"
 
     steps:
       - uses: actions/checkout@v4
@@ -36,10 +52,8 @@ jobs:
         env:
           # configure cibuildwheel to build native archs ('auto'), and some
           # emulated ones, plus cross-compile on macos
-          CIBW_ARCHS_LINUX: auto
-          CIBW_ARCHS_MACOS: auto arm64
+          CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_TEST_SKIP: "*_arm64 *universal2:arm64 *linux_i686"
-          CIBW_ARCHS_WINDOWS: auto64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2010
           CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
@@ -48,10 +62,10 @@ jobs:
             yum -y update && yum -y install epel-release && yum install -y re2-devel ninja-build
           CIBW_BEFORE_ALL_MACOS: >
             brew install re2 pybind11
-          # macos target should be 10.14 to get c++17
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=13.0
+          # macos target should be at least 10.13 to get full c++17
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.macosx_deployment_target }}
           CIBW_BEFORE_ALL_WINDOWS: >
-            vcpkg install pkgconf re2:x64-windows
+            vcpkg install pkgconf:${{ matrix.triplet }} re2:${{ matrix.triplet }}
             && vcpkg integrate install
           CIBW_ENVIRONMENT_WINDOWS: 'CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
           CIBW_TEST_REQUIRES: ""
@@ -59,7 +73,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -88,7 +102,7 @@ jobs:
       run:
         shell: bash
     name: Check artifacts are correct
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4

@@ -1,14 +1,19 @@
 from __future__ import print_function
-try:
-    from test.test_support import verbose
-except ImportError:
-    from test.support import verbose
-import re2 as re
-from re import Scanner
+
 import os
 import sys
 import traceback
 from weakref import proxy
+
+import re2 as re
+from re import Scanner
+
+try:
+    from test import support
+    from test.support import verbose
+except ImportError:  # import error on Windows
+    verbose = re.VERBOSE
+
 if sys.version_info[0] > 2:
     unicode = str
     unichr = chr
