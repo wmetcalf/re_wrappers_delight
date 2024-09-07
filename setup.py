@@ -32,11 +32,17 @@ class CMakeBuild(build_ext):
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
 
-        # Using this requires trailing slash for auto-detection & inclusion of
-        # auxiliary "native" libs
+        # Set a sensible default build type for packaging
+        if "CMAKE_BUILD_OVERRIDE" not in os.environ:
+            cfg = "Debug" if self.debug else "RelWithDebInfo"
+        else:
+            cfg = os.environ.get("CMAKE_BUILD_OVERRIDE", "")
 
-        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
-        cfg = "Debug" if debug else "Release"
+        # Set a coverage flag if provided
+        if "WITH_COVERAGE" not in os.environ:
+            coverage = "OFF"
+        else:
+            coverage = os.environ.get("WITH_COVERAGE", "")
 
         # CMake lets you override the generator - we need to check this.
         # Can be set with Conda-Build, for example.
@@ -50,7 +56,11 @@ class CMakeBuild(build_ext):
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
-        build_args = []
+        build_args = ["--verbose"]
+
+        # Add CMake arguments set as environment variable
+        if "CMAKE_ARGS" in os.environ:
+            cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
 
         # CMake also lets you provide a toolchain file.
         # Can be set in CI build environments for example.
@@ -68,7 +78,7 @@ class CMakeBuild(build_ext):
             # 3.15+.
             if not cmake_generator or cmake_generator == "Ninja":
                 try:
-                    import ninja
+                    import ninja  # noqa: F401
 
                     ninja_executable_path = Path(ninja.BIN_DIR) / "ninja"
                     cmake_args += [
