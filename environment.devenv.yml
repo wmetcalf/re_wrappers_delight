@@ -19,9 +19,9 @@ dependencies:
   - python={{ python_version }}
   - cython
   - pybind11
-  - pip:
-    # these two need to be newer than broken runner packages
-    - pytest
-    - regex
-    - urllib3
-    - six
+  - pip
+  - pytest
+  - regex
+  # these two need to be newer than broken runner packages
+  - urllib3
+  - six

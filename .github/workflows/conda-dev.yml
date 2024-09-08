@@ -28,8 +28,11 @@ jobs:
       with:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
-        channels: conda-forge
-        use-only-tar-bz2: true
+        mamba-version: "*"
+        channels: conda-forge,defaults
+        channel-priority: true
+        activate-environment: pyre2
+        environment-file: environment.devenv.yml
 
     - name: Cache conda packages
       id: cache
@@ -46,20 +49,21 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
 
     - name: Configure condadev environment
-      shell: bash -l {0}
+      shell: bash -el {0}
       env:
         PY_VER: ${{ matrix.python-version }}
       run: |
         conda config --set always_yes yes --set changeps1 no
-        conda config --add channels conda-forge
-        conda install conda-devenv
-        conda devenv
+        conda info
+        conda list
+        conda config --show-sources
+        conda config --show
+        printenv | sort
 
     - name: Build and test
-      shell: bash -l {0}
+      shell: bash -el {0}
       env:
         PY_VER: ${{ matrix.python-version }}
       run: |
-        source activate pyre2
         python -m pip install .[test] -vv
         python -m pytest -v .
