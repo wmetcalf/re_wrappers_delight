@@ -1,11 +1,22 @@
 name: pyre2
 
+{% set python_version = os.environ.get("PY_VER", "3.11") %}
+
+channels:
+  - conda-forge
+
 dependencies:
-  - python ==3.11
-  - cmake >=3.18
+  - cmake>=3.18
   - ninja
+  - ccache
+  - clangxx_osx-64  # [osx]
+  - gxx_linux-64  # [linux]
+  - pybind11-abi
+  - pybind11-stubgen
+  - vs2019_win-64  # [win]
+  - pkgconfig  # [win]
+  - python={{ python_version }}
   - cython
-  - cxx-compiler
   - pybind11
   - pip
   - re2

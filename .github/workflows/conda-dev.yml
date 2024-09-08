@@ -2,10 +2,10 @@ name: CondaDev
 
 on:
   workflow_dispatch:
-  #push:
-    #branches:
-      #- master
-  #pull_request:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   build:
@@ -14,8 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['macos-11', 'ubuntu-22.04']
-        python-version: ['3.8', '3.11']
+        os: ['ubuntu-22.04', 'macos-13']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
     env:
       OS: ${{ matrix.os }}
       PYTHON: ${{ matrix.python-version }}
@@ -23,15 +23,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
-        channel-priority: strict
         use-only-tar-bz2: true
 
     - name: Cache conda packages
@@ -39,7 +36,7 @@ jobs:
       uses: actions/cache@v4
       env:
         # Increase this value to reset cache and rebuild the env during the PR
-        CACHE_NUMBER: 3
+        CACHE_NUMBER: 0
       with:
           path: /home/runner/conda_pkgs_dir
           key:
