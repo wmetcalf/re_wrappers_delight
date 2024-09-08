@@ -9,6 +9,7 @@ dependencies:
   - cmake>=3.18
   - ninja
   - ccache
+  - re2
   - clangxx_osx-64  # [osx]
   - gxx_linux-64  # [linux]
   - pybind11-abi
@@ -18,8 +19,9 @@ dependencies:
   - python={{ python_version }}
   - cython
   - pybind11
-  - pip
-  - re2
-  - pytest
-  - regex
-  - six
+  - pip:
+    # these two need to be newer than broken runner packages
+    - pytest
+    - regex
+    - urllib3
+    - six
