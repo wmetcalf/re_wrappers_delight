@@ -1,10 +1,5 @@
 name: pyre2
 
-{% set python_version = os.environ.get("PY_VER", "3.11") %}
-
-channels:
-  - conda-forge
-
 dependencies:
   - cmake>=3.18
   - ninja
@@ -16,12 +11,12 @@ dependencies:
   - pybind11-stubgen
   - vs2019_win-64  # [win]
   - pkgconfig  # [win]
-  - python={{ python_version }}
+  - python ={{ get_env("PY_VER", default="3.9") }}
   - cython
   - pybind11
   - pip
   - pytest
   - regex
-  # these two need to be newer than broken runner packages
+  # these two need to be newer than broken runner packages, 3.12 only
   - urllib3
   - six

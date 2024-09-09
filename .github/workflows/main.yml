@@ -104,9 +104,10 @@ jobs:
     name: Check artifacts are correct
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-      # note wheels should be in subdirectory <upload_name>
+      # note wheels should be in subdirectories named <artifact_name>
       - name: Check number of downloaded artifacts
-        run: ls -l artifact
+        run: ls -l artifacts/*
