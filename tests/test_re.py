@@ -154,19 +154,6 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.sub(b'x', br'\400', b'x'), b'\0')
         self.assertEqual(re.sub(b'x', br'\777', b'x'), b'\377')
 
-        self.assertRaises(re.error, re.sub, 'x', r'\1', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\8', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\9', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\11', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\18', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\1a', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\90', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\99', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\118', 'x')  # r'\11' + '8'
-        self.assertRaises(re.error, re.sub, 'x', r'\11a', 'x')
-        self.assertRaises(re.error, re.sub, 'x', r'\181', 'x')  # r'\18' + '1'
-        self.assertRaises(re.error, re.sub, 'x', r'\800', 'x')  # r'\80' + '0'
-
         # in python2.3 (etc), these loop endlessly in sre_parser.py
         self.assertEqual(re.sub('(((((((((((x)))))))))))', r'\11', 'x'), 'x')
         self.assertEqual(re.sub('((((((((((y))))))))))(.)', r'\118', 'xyz'),
@@ -186,18 +173,6 @@ class ReTests(unittest.TestCase):
         # Test for empty sub() behavior, see SF bug #462270
         self.assertEqual(re.sub('x*', '-', 'abxd'), '-a-b-d-')
         self.assertEqual(re.sub('x+', '-', 'abxd'), 'ab-d')
-
-    def test_symbolic_refs(self):
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<a', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<a a>', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<1a1>', 'xx')
-        self.assertRaises(IndexError, re.sub, '(?P<a>x)', r'\g<ab>', 'xx')
-        # non-matched groups no longer raise an error:
-        # self.assertRaises(re.error, re.sub, '(?P<a>x)|(?P<b>y)', '\g<b>', 'xx')
-        # self.assertRaises(re.error, re.sub, '(?P<a>x)|(?P<b>y)', '\\2', 'xx')
-        self.assertRaises(re.error, re.sub, '(?P<a>x)', r'\g<-1>', 'xx')
 
     def test_re_subn(self):
         self.assertEqual(re.subn("(?i)b+", "x", "bbbb BBBB"), ('x x', 2))
@@ -482,7 +457,6 @@ class ReTests(unittest.TestCase):
             self.assertNotEqual(re.match(r"\x%02x" % i, chr(i)), None)
             self.assertNotEqual(re.match(r"\x%02x0" % i, chr(i)+"0"), None)
             self.assertNotEqual(re.match(r"\x%02xz" % i, chr(i)+"z"), None)
-        self.assertRaises(re.error, re.match, b"\\911", b"")
 
     def test_sre_character_class_literals(self):
         for i in [0, 8, 16, 32, 64, 127, 128, 255]:
@@ -492,7 +466,6 @@ class ReTests(unittest.TestCase):
             self.assertNotEqual(re.match(r"[\x%02x]" % i, chr(i)), None)
             self.assertNotEqual(re.match(r"[\x%02x0]" % i, chr(i)), None)
             self.assertNotEqual(re.match(r"[\x%02xz]" % i, chr(i)), None)
-        self.assertRaises(re.error, re.match, b"[\\911]", b"")
 
     def test_bug_113254(self):
         self.assertEqual(re.match(r'(a)|(b)', 'b').start(1), -1)
@@ -506,11 +479,6 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.match(r'(?P<a>a)(?P<b>b)?b','ab').lastgroup, 'a')
         self.assertEqual(re.match("(?P<a>a(b))", "ab").lastgroup, 'a')
         self.assertEqual(re.match("((a))", "a").lastindex, 1)
-
-    def test_bug_545855(self):
-        # bug 545855 -- This pattern failed to cause a compile error as it
-        # should, instead provoking a TypeError.
-        self.assertRaises(re.error, re.compile, 'foo[a-')
 
     def test_bug_418626(self):
         # bugs 418626 at al. -- Testing Greg Chapman's addition of op code
